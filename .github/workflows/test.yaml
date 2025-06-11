@@ -8,20 +8,26 @@ on: #[push]
 
 jobs:
   container-create:
-    runs-on:
-      - self-hosted
-      - ashu-runner-self-hosted
+    runs-on: [self-hosted, ashu-runner-self-hosted]
+      #- self-hosted
+      #- ashu-runner-self-hosted
     container:
       image: ubuntu:22.04
     steps:
       - name: Container
         run: |
-          docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+          docker pull ubuntu:22.04
+          docker run -dit --privileged \
+          -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+          --name github-api \
+          ubuntu:22.04
+
+          #docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
 
   copy-script:
-    runs-on: 
-      - self-hosted
-      - ashu-runner-self-hosted
+    runs-on: [self-hosted, ashu-runner-self-hosted]
+      #- self-hosted
+      #- ashu-runner-self-hosted
     needs: container-create
     steps:
       - name: Checkout code
@@ -31,9 +37,9 @@ jobs:
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
 
   run-script:
-    runs-on:
-      - self-hosted
-      - ashu-runner-self-hosted
+    runs-on: [self-hosted, ashu-runner-self-hosted]
+      #- self-hosted
+      #- ashu-runner-self-hosted
     needs: copy-script
     steps:
       - name: Run script inside container

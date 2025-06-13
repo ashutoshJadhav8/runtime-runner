@@ -1,47 +1,15 @@
-name: Sleep for 5 Minutes
+name: Docker PS on Push
 
-on: #[push]
+on:
   push:
     branches:
       - workFlow
-        #workflow_dispatch:
 
 jobs:
-  container-create:
-    runs-on: #[self-hosted, ashu-runner-self-hosted]
-      - self-hosted
-      - ashu-runner-self-hosted
-    container:
-      image: ubuntu:22.04
+  docker-ps:
+    runs-on: self-hosted
+
     steps:
-      - name: Container
+      - name: Run docker ps -a
         run: docker ps -a
-        #   docker pull ubuntu:22.04
-        #   docker run -dit --privileged \
-        #   -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-        #   --name github-api \
-        #   ubuntu:22.04
 
-  #         #docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
-
-  # copy-script:
-  #   runs-on: [self-hosted, ashu-runner-self-hosted]
-  #     #- self-hosted
-  #     #- ashu-runner-self-hosted
-  #   needs: container-create
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Copy script into container
-  #       run: |
-  #         docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
-
-  # run-script:
-  #   runs-on: [self-hosted, ashu-runner-self-hosted]
-  #     #- self-hosted
-  #     #- ashu-runner-self-hosted
-  #   needs: copy-script
-  #   steps:
-  #     - name: Run script inside container
-  #       run: |
-  #         docker exec github-api /runtime.sh --ref workFlow

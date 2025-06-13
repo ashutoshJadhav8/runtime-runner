@@ -13,14 +13,14 @@ jobs:
       #- ashu-runner-self-hosted
     container:
       image: ubuntu:22.04
-    steps:
-      - name: Container
-        run: |
-          docker pull ubuntu:22.04
-          docker run -dit --privileged \
-          -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-          --name github-api \
-          ubuntu:22.04
+    # steps:
+    #   - name: Container
+        # run: |
+        #   docker pull ubuntu:22.04
+        #   docker run -dit --privileged \
+        #   -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+        #   --name github-api \
+        #   ubuntu:22.04
 
   #         #docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
 

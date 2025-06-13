@@ -1,9 +1,6 @@
 name: Docker PS on Push
 
-on:
-  push:
-    branches:
-      - workFlow
+on: push
 
 jobs:
   docker-ps:

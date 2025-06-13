@@ -8,9 +8,9 @@ on: #[push]
 
 jobs:
   container-create:
-    runs-on: [self-hosted, ashu-runner-self-hosted]
-      #- self-hosted
-      #- ashu-runner-self-hosted
+    runs-on: #[self-hosted, ashu-runner-self-hosted]
+      - self-hosted
+      - ashu-runner-self-hosted
     container:
       image: ubuntu:22.04
     steps:

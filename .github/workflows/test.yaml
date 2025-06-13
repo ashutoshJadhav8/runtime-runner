@@ -7,9 +7,8 @@ on:
 
 jobs:
   docker-ps:
-    runs-on: self-hosted
+    runs-on: ashu-runner-self-hosted
 
     steps:
       - name: Run docker ps -a
         run: docker ps -a
-

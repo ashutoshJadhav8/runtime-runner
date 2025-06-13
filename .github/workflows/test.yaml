@@ -13,9 +13,9 @@ jobs:
       #- ashu-runner-self-hosted
     container:
       image: ubuntu:22.04
-    # steps:
-    #   - name: Container
-        # run: |
+    steps:
+      - name: Container
+        run: docker ps -a
         #   docker pull ubuntu:22.04
         #   docker run -dit --privileged \
         #   -v /sys/fs/cgroup:/sys/fs/cgroup:ro \

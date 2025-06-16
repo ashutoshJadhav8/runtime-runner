@@ -1,11 +1,11 @@
-name: Docker PS on Push
+name: Docker
 
 on: push
 
 jobs:
   docker-ps:
-    runs-on: ashu-runner-self-hosted
+    runs-on: self-hosted
 
     steps:
-      - name: Run docker ps -a
+      - name: command
         run: echo "started"

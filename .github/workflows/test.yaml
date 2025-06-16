@@ -8,4 +8,4 @@ jobs:
 
     steps:
       - name: Run docker ps -a
-        run: ls -la
+        run: echo "started"

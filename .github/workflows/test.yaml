@@ -13,7 +13,4 @@ jobs:
       - ashu-runner-self-hosted
     steps:
       - name: Sleep for 1 minutes
-        run: |
-          echo "hello there!"
-          sleep 60
-          echo "have a good time"
+        run: docker ps -a

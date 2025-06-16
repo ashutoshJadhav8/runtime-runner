@@ -9,15 +9,13 @@ on: #[push]
 jobs:
   container-create:
     runs-on: #[self-hosted, ashu-runner-self-hosted]
-      - self-hosted
       - ashu-runner-self-hosted
     steps:
       - name: Container
         run: |
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
   copy-script:
-    runs-on: [self-hosted, ashu-runner-self-hosted]
-      - self-hosted
+    runs-on: #[self-hosted, ashu-runner-self-hosted]
       - ashu-runner-self-hosted
     needs: container-create
     steps:
@@ -27,8 +25,7 @@ jobs:
         run: |
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
   run-script:
-    runs-on: [self-hosted, ashu-runner-self-hosted]
-      - self-hosted
+    runs-on: #[self-hosted, ashu-runner-self-hosted]
       - ashu-runner-self-hosted
     needs: copy-script
     steps:

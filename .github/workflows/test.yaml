@@ -1,16 +1,48 @@
-name: Sleep for 5 Minutes
+name: runtime-build-test
 
 on: #[push]
   push:
     branches:
       - workFlow
         #workflow_dispatch:
-  
+
 jobs:
-  sleep-job:
-    runs-on: 
+  container-create:
+    runs-on: #[self-hosted, ashu-runner-self-hosted]
       - self-hosted
       - ashu-runner-self-hosted
+    container:
+      image: ubuntu:22.04
     steps:
-      - name: Sleep for 1 minutes
-        run: docker run --name api-container ubuntu:22.04
+      - name: Container
+        run: |
+          docker ps -a
+          docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+          # docker pull ubuntu:22.04
+          # docker run -dit --privileged \
+          # -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+          # --name github-api \
+          # ubuntu:22.04
+
+
+  copy-script:
+    runs-on: [self-hosted, ashu-runner-self-hosted]
+      #- self-hosted
+      #- ashu-runner-self-hosted
+    needs: container-create
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Copy script into container
+        run: |
+          docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
+
+  run-script:
+    runs-on: [self-hosted, ashu-runner-self-hosted]
+      #- self-hosted
+      #- ashu-runner-self-hosted
+    needs: copy-script
+    steps:
+      - name: Run script inside container
+        run: |
+          docker exec github-api /runtime.sh --ref workFlow

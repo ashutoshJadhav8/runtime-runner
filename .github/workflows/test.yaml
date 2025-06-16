@@ -8,9 +8,9 @@ on: #[push]
 
 jobs:
   sleep-job:
-    #runs-on:
-    # - self-hosted
-    # - ashu-runner-self-hosted
+    runs-on:
+    - self-hosted
+    - ashu-runner-self-hosted
     steps:
       - name: Sleep for 1 minutes
         run: |

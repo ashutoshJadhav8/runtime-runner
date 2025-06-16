@@ -1,15 +1,19 @@
-name: Docker
-
-  #on: [push]
+name: Sleep for 5 Minutes
 
 on: #[push]
-  workflow_dispatch:
-
-
+  push:
+    branches:
+      - workFlow
+        #workflow_dispatch:
+  
 jobs:
-  docker-ps:
-    runs-on: self-hosted
-
+  sleep-job:
+    runs-on: 
+      - self-hosted
+      - ashu-self-hosted
     steps:
-      - name: command
-        run: "echo started"
+      - name: Sleep for 1 minutes
+        run: |
+          echo "hello there!"
+          sleep 60
+          echo "have a good time"

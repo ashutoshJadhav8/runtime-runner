@@ -17,7 +17,7 @@ jobs:
       - name: Container
         run: |
           docker ps -a
-          docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+          # docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
           # docker pull ubuntu:22.04
           # docker run -dit --privileged \
           # -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
@@ -25,24 +25,24 @@ jobs:
           # ubuntu:22.04
 
 
-  copy-script:
-    runs-on: [self-hosted, ashu-runner-self-hosted]
-      #- self-hosted
-      #- ashu-runner-self-hosted
-    needs: container-create
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Copy script into container
-        run: |
-          docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
+  # copy-script:
+  #   runs-on: [self-hosted, ashu-runner-self-hosted]
+  #     #- self-hosted
+  #     #- ashu-runner-self-hosted
+  #   needs: container-create
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Copy script into container
+  #       run: |
+  #         docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
 
-  run-script:
-    runs-on: [self-hosted, ashu-runner-self-hosted]
-      #- self-hosted
-      #- ashu-runner-self-hosted
-    needs: copy-script
-    steps:
-      - name: Run script inside container
-        run: |
-          docker exec github-api /runtime.sh --ref workFlow
+  # run-script:
+  #   runs-on: [self-hosted, ashu-runner-self-hosted]
+  #     #- self-hosted
+  #     #- ashu-runner-self-hosted
+  #   needs: copy-script
+  #   steps:
+  #     - name: Run script inside container
+  #       run: |
+  #         docker exec github-api /runtime.sh --ref workFlow

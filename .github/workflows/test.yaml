@@ -15,8 +15,7 @@ jobs:
       - name: Container
         run: |
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
-
-  copy:
+  copy-script:
     runs-on: [self-hosted, ashu-runner-self-hosted]
       - self-hosted
       - ashu-runner-self-hosted

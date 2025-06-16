@@ -15,7 +15,7 @@ jobs:
       - name: Container
         run: |
           docker ps -a
-          # docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+          docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
           # docker pull ubuntu:22.04
           # docker run -dit --privileged \
           # -v /sys/fs/cgroup:/sys/fs/cgroup:ro \

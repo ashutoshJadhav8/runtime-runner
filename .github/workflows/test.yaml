@@ -8,4 +8,4 @@ jobs:
 
     steps:
       - name: command
-        run: sudo echo "started"
+        run: "echo started"

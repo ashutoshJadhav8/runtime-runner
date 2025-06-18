@@ -33,4 +33,4 @@ jobs:
       - name: Run the script
         run: |
           docker exec github-api bash -c "/runtime.sh --ref workFlow 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
-          #docker exec github-api chmod +x /runtime.sh
+          # docker exec github-api chmod +x /runtime.sh

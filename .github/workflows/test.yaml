@@ -32,12 +32,5 @@ jobs:
         run: docker exec github-api chmod +x /runtime.sh
       - name: Run the script
         run: |
-          set -o pipefail
-          docker exec github-api bash -c "/runtime.sh --ref workFlow"
-          exit_code=$?
-          if [ "$exit_code" -ne 0 ]; then
-            echo "::error ::Script inside container failed with exit code $exit_code"
-            exit $exit_code
-          fi
-          # docker exec github-api bash -c "/runtime.sh --ref workFlow 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref workFlow 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.sh

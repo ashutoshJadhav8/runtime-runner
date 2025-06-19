@@ -32,7 +32,7 @@ jobs:
         run: docker exec github-api chmod +x /runtime.sh
       - name: Run the script for build
         run: |
-          # docker exec github-api bash -c "/runtime.sh"
+          #docker exec github-api bash -c "/runtime.sh"
           docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.sh
   runtime-test:

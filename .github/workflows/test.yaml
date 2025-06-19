@@ -6,7 +6,7 @@ on: #[push]
       - workFlow
 jobs:
   container-create:
-    runs-on: #[self-hosted, ashu-runner-self-hosted]
+    runs-on:
       - ashu-runner-self-hosted
     steps:
       - name: Container
@@ -14,7 +14,7 @@ jobs:
           docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
   copy-script:
-    runs-on: #[self-hosted, ashu-runner-self-hosted]
+    runs-on:
       - ashu-runner-self-hosted
     needs: container-create
     steps:
@@ -24,7 +24,7 @@ jobs:
         run: |
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
   runtime-build:
-    runs-on: #[self-hosted, ashu-runner-self-hosted]
+    runs-on:
       - ashu-runner-self-hosted
     needs: copy-script
     steps:
@@ -36,7 +36,7 @@ jobs:
           docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.s
   runtime-test:
-    runs-on: #[self-hosted, ashu-runner-self-hosted]
+    runs-on:
       - ashu-runner-self-hosted
     needs: runtime-build
     steps:

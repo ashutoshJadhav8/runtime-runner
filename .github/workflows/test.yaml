@@ -46,6 +46,8 @@ jobs:
   logs:
     runs-on:
       - ashu-runner-self-hosted
+    needs: runtime-test
+    if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: |
@@ -57,6 +59,8 @@ jobs:
   clean-up:
     runs-on:
       - ashu-runner-self-hosted
+    needs: logs
+    if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: docker stop github-api && docker rm github-api

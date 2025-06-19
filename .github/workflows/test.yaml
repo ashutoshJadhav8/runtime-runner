@@ -53,9 +53,9 @@ jobs:
         run: |
           export Dir_NAME=log-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp /tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp /tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp /runtime/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/runtime/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
     runs-on:
       - ashu-runner-self-hosted

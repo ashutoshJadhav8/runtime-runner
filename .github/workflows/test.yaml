@@ -23,7 +23,7 @@ jobs:
       - name: Copy script into container
         run: |
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
-  run-script:
+  runtime-build:
     runs-on: #[self-hosted, ashu-runner-self-hosted]
       - ashu-runner-self-hosted
     needs: copy-script
@@ -33,5 +33,5 @@ jobs:
       - name: Run the script
         run: |
           ##docker exec github-api bash -c "/runtime.sh"
-          docker exec github-api bash -c "/runtime.sh --ref workFlow 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.sh

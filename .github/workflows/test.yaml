@@ -30,8 +30,16 @@ jobs:
     steps:
       - name: Run script inside container
         run: docker exec github-api chmod +x /runtime.sh
-      - name: Run the script
+      - name: Run the script for build
         run: |
           ##docker exec github-api bash -c "/runtime.sh"
           docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"
-          # docker exec github-api chmod +x /runtime.sh
+          # docker exec github-api chmod +x /runtime.s
+  runtime-test:
+    runs-on: #[self-hosted, ashu-runner-self-hosted]
+      - ashu-runner-self-hosted
+    needs: runtime-build
+    steps:
+      - name: Run the script for test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref workFlow --test 2>&1 | tee /tmp/script.log; exit \${PIPESTATUS[0]}"

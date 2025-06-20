@@ -55,7 +55,7 @@ jobs:
           mkdir -p /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp github-api:/runtime/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
     runs-on:
       - ashu-runner-self-hosted

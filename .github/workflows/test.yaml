@@ -31,7 +31,7 @@ jobs:
         run: |
           #docker exec github-api bash -c "/runtime.sh"
           docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
-          # docker exec github-api chmod +x /runtime.sh
+          #docker exec github-api chmod +x /runtime.sh
   runtime-test:
     runs-on: ashu-runner-self-hosted
     needs: runtime-build

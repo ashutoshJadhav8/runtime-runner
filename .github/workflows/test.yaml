@@ -53,7 +53,6 @@ jobs:
           docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
     runs-on: ashu-runner-self-hosted
-    if: ${{ always() }}
     needs: logs
     steps:
       - name: Copy logs of build and test to local machine

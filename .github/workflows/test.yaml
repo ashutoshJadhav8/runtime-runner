@@ -6,16 +6,16 @@ on: #[push]
       - workFlow
 jobs:
   container-create:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     steps:
       - name: Container
         run: |
           docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
   copy-script:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     needs: container-create
     steps:
       - name: Checkout code
@@ -24,8 +24,8 @@ jobs:
         run: |
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
   runtime-build:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     needs: copy-script
     steps:
       - name: Run script inside container
@@ -36,31 +36,32 @@ jobs:
           docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.sh
   runtime-test:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     needs: runtime-build
     steps:
       - name: Run the script for test
         run: |
           docker exec github-api bash -c "/runtime.sh --ref workFlow --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
   logs:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     needs: runtime-test
     if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: |
           export Dir_NAME=log-$(date +'%Y-%m-%d_%H-%M-%S')
-          mkdir -p /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
+          mkdir -p /root/ashutosh/api/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
           docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
-    runs-on:
-      - ashu-runner-self-hosted
+    runs-on: ashu-runner-self-hosted
+    if: contains(github.event.head_commit.message, 'AshJd')
     needs: logs
     if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: docker stop github-api && docker rm github-api
+

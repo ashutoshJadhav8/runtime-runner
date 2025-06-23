@@ -7,7 +7,6 @@ on:
 jobs:
   container-create:
     runs-on: ashu-runner-self-hosted
-    if: contains(github.event.head_commit.message, 'AshJd')
     steps:
       - name: Container
         run: |
@@ -15,7 +14,6 @@ jobs:
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
   copy-script:
     runs-on: ashu-runner-self-hosted
-    if: contains(github.event.head_commit.message, 'AshJd')
     needs: container-create
     steps:
       - name: Checkout code
@@ -25,7 +23,6 @@ jobs:
           docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
   runtime-build:
     runs-on: ashu-runner-self-hosted
-    if: contains(github.event.head_commit.message, 'AshJd')
     needs: copy-script
     steps:
       - name: Run script inside container
@@ -37,7 +34,6 @@ jobs:
           # docker exec github-api chmod +x /runtime.sh
   runtime-test:
     runs-on: ashu-runner-self-hosted
-    if: contains(github.event.head_commit.message, 'AshJd')
     needs: runtime-build
     steps:
       - name: Run the script for test

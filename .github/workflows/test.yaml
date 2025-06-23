@@ -1,6 +1,6 @@
 name: runtime-build-test
 
-on: #[push]
+on:
   push:
     branches:
       - workFlow
@@ -45,9 +45,8 @@ jobs:
           docker exec github-api bash -c "/runtime.sh --ref workFlow --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
   logs:
     runs-on: ashu-runner-self-hosted
-    if: ${{ always() && contains(github.event.head_commit.message, 'AshJd') }}
+    if: ${{ always() }}
     needs: runtime-test
-    #if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: |
@@ -58,9 +57,8 @@ jobs:
           docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
     runs-on: ashu-runner-self-hosted
-    if: ${{ always() && contains(github.event.head_commit.message, 'AshJd') }}
+    if: ${{ always() }}
     needs: logs
     steps:
       - name: Copy logs of build and test to local machine
         run: docker stop github-api && docker rm github-api
-

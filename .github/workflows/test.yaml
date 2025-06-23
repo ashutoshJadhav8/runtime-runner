@@ -60,7 +60,6 @@ jobs:
     runs-on: ashu-runner-self-hosted
     if: ${{ always() && contains(github.event.head_commit.message, 'AshJd') }}
     needs: logs
-    # if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: docker stop github-api && docker rm github-api

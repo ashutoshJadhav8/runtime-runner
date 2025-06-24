@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Copy logs of build and test to local machine
         run: |
-          cd $WORK
+          cd $HOME
           export WORK_PATH=$(pwd)
           export Dir_NAME=log-${GITHUB_SHA::7}-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME

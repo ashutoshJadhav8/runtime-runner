@@ -1,9 +1,10 @@
 name: runtime-build-test
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
     branches:
-      - workFlow
+      - main
 jobs:
   container-create:
     runs-on: ashu-runner-self-hosted

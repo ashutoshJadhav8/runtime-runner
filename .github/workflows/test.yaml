@@ -54,7 +54,7 @@ jobs:
           mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
-          #docker cp github-api:/runtime-runner/artifacts/bin $WORK_PATH/runtime-logs/$Dir_NAME
+          # docker cp github-api:/runtime-runner/artifacts/bin $WORK_PATH/runtime-logs/$Dir_NAME
   clean-up:
     runs-on: ashu-runner-self-hosted
     needs: logs

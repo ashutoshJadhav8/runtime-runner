@@ -46,17 +46,11 @@ jobs:
     steps:
       - name: Copy logs of build and test to local machine
         run: |
-          export Dir_NAME=log-${{ github.sha }}-$(date +'%Y-%m-%d_%H-%M-%S')
+          export Dir_NAME=log-${{ github.sha::7 }}-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p /root/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/api/runtime-logs/$Dir_NAME || exit 1
-          docker cp github-api:/tmp/runtime-test.log /root/ashutosh/api/runtime-logs/$Dir_NAME 
-          docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/api/runtime-logs/$Dir_NAME || exit 1
-
-           #export Dir_NAME=log-${{ github.sha }}-$(date +'%Y-%m-%d_%H-%M-%S')
-           #mkdir -p /root/ashutosh/api/runtime-logs/$Dir_NAME
-           #docker cp github-api:/tmp/runtime-build.log /root/ashutosh/api/runtime-logs/$Dir_NAME
-           #docker cp github-api:/tmp/runtime-build.log /root/ashutosh/api/runtime-logs/$Dir_NAME
-           #docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/api/runtime-logs/$Dir_NAME
+          docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/api/runtime-logs/$Dir_NAME
   clean-up:
     runs-on: ashu-runner-self-hosted
     needs: logs

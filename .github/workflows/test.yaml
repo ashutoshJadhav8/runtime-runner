@@ -2,6 +2,7 @@ name: runtime-build-test
 
 on:
   pull_request:
+    types: [opened, reopened]
     branches:
       - workFlow
 jobs:

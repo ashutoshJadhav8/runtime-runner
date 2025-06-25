@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Run the script for test
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref workFlow --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
   logs:
     runs-on: ashu-runner-self-hosted
     needs: runtime-test

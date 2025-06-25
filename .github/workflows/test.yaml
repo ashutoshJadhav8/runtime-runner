@@ -1,7 +1,7 @@
 name: runtime-build-test
 
 on:
-  push:
+  pull_request:
     branches:
       - workFlow
 jobs:
@@ -20,7 +20,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Copy script into container
         run: |
-          docker cp /root/ashutosh/api/runtime.sh github-api:/runtime.sh
+          cd $HOME
+          export WORK_PATH=$(pwd)
+          docker cp $WORK_PATH/runtime-logs/runtime.sh github-api:/runtime.sh
   runtime-build:
     runs-on: ashu-runner-self-hosted
     needs: copy-script
@@ -30,7 +32,7 @@ jobs:
       - name: Run the script for build
         run: |
           # docker exec github-api bash -c "/runtime.sh"
-          docker exec github-api bash -c "/runtime.sh --ref workFlow --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
           # docker exec github-api chmod +x /runtime.sh
   runtime-test:
     runs-on: ashu-runner-self-hosted
@@ -41,20 +43,21 @@ jobs:
           docker exec github-api bash -c "/runtime.sh --ref workFlow --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
   logs:
     runs-on: ashu-runner-self-hosted
-    if: ${{ always() }}
     needs: runtime-test
+    if: ${{ always() }}
     steps:
       - name: Copy logs of build and test to local machine
         run: |
-          export Dir_NAME=log-${{ github.sha }}-$(date +'%Y-%m-%d_%H-%M-%S')
-          mkdir -p /root/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          docker cp github-api:/tmp/runtime-build.log /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-          #docker cp github-api:/runtime-runner/artifacts/bin /root/ashutosh/ashutosh/api/runtime-logs/$Dir_NAME
-  clean-up:
-    runs-on: ashu-runner-self-hosted
-    needs: logs
-    steps:
-      - name: Copy logs of build and test to local machine
-        run: docker stop github-api && docker rm github-api
-
+          cd $HOME
+          export WORK_PATH=$(pwd)
+          export Dir_NAME=log-${GITHUB_SHA::7}-$(date +'%Y-%m-%d_%H-%M-%S')
+          mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
+          # docker cp github-api:/runtime-runner/artifacts/bin $WORK_PATH/runtime-logs/$Dir_NAME
+  # clean-up:
+  #   runs-on: ashu-runner-self-hosted
+  #   needs: logs
+  #   steps:
+  #     - name: Copy logs of build and test to local machine
+  #       run: docker stop github-api && docker rm github-api

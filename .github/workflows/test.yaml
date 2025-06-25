@@ -51,7 +51,7 @@ jobs:
         run: |
           cd $HOME
           export WORK_PATH=$(pwd)
-          export Dir_NAME=log-${GITHUB_SHA::7}-$(date +'%Y-%m-%d_%H-%M-%S')
+          export Dir_NAME=commit-${GITHUB_SHA::7}-date-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME

@@ -56,8 +56,8 @@ jobs:
           export Dir_NAME=commit-${GITHUB_SHA::7}-date-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
-          docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
-          docker cp github-api:/runtime-runner/artifacts/bin $WORK_PATH/runtime-logs/$Dir_NAME
+          docker cp github-api:/tmp/runtime-test.log $WORK_PATH/runtime-logs/$Dir_NAME
+          docker cp github-api:/runtime/artifacts/bin $WORK_PATH/runtime-logs/$Dir_NAME
   # clean-up:
   #   runs-on: ashu-runner-self-hosted
   #   needs: logs

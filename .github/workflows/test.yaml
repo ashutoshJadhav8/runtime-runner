@@ -8,8 +8,23 @@ on:
     branches:
       - workFlow
 jobs:
+  check-ms-bot:
+    runs-on: ashu-runner-self-hosted
+    steps:
+      - name: Check if PR title or body
+        id: check
+        run: |
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "PR Body: ${{ github.event.pull_request.body }}"
+
+          if [[ "${{ github.event.pull_request.title }}" == *"@ASH_JD"* ]] || [[ "${{ github.event.pull_request.body }}" == *"@ASH_JD"* ]]; then
+            exit 0
+          else
+            exit 1
+          fi
   container-create:
     runs-on: ashu-runner-self-hosted
+    needs: check-ms-bot
     steps:
       - name: Container
         run: |
@@ -64,4 +79,3 @@ jobs:
   #   steps:
   #     - name: Copy logs of build and test to local machine
   #       run: docker stop github-api && docker rm github-api
-

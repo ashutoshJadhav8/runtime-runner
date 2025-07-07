@@ -6,14 +6,14 @@ on:
       - workFlow
 jobs:
   container-create:
-    runs-on: ubuntu-24.04-ppc64le
+    runs-on: ashu-runner-self-hosted
     steps:
       - name: Container
         run: |
           docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
   copy-script:
-    runs-on: ubuntu-24.04-ppc64le
+    runs-on: ashu-runner-self-hosted
     needs: container-create
     steps:
       - name: Checkout code
@@ -22,7 +22,7 @@ jobs:
         run: |
           docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
   runtime-build:
-    runs-on: ubuntu-24.04-ppc64le
+    runs-on: ashu-runner-self-hosted
     needs: copy-script
     steps:
       - name: Run script inside container
@@ -31,7 +31,7 @@ jobs:
         run: |
           docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
   runtime-test:
-    runs-on: ubuntu-24.04-ppc64le
+    runs-on: ashu-runner-self-hosted
     needs: runtime-build
     steps:
       - name: Run the script for test

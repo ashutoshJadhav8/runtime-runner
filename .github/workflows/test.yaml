@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Copy script into container
         run: |
-          docker cp $(pwd)/runtime.sh github-api:/runtime.sh
+          docker cp $(pwd)/.github/workflows/runtime.sh github-api:/runtime.sh
   runtime-build:
     runs-on: ashu-runner-self-hosted
     needs: copy-script

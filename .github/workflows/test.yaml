@@ -10,8 +10,10 @@ jobs:
     runs-on: ashu-runner-self-hosted
 
     steps:
-      - name: Check if PR title or body contains @ASHU_JD
-        id: check_pr
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check PR title/body and optionally run container
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -19,20 +21,20 @@ jobs:
             const pr = context.payload.pull_request;
             const title = pr.title || "";
             const body = pr.body || "";
-            return title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
+            const shouldRun = title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
 
-      - name: Stop if PR does not contain @ASHU_JD
-        if: steps.check_pr.outputs.result != 'true'
-        run: |
-          echo "PR does not contain @ASHU_JD, skipping job."
-          exit 0
+            if (!shouldRun) {
+              console.log("✅ PR does not contain @ASHU_JD — skipping container execution, but marking workflow as success.");
+              return;
+            }
 
-      - name: Run container steps
-        if: steps.check_pr.outputs.result == 'true'
-        run: |
-          docker stop github-api && docker rm github-api || true
-          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
-          docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
-          docker exec github-api chmod +x /runtime.sh
-          docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
-          docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+            const exec = require('child_process').execSync;
+
+            console.log("🚀 PR contains @ASHU_JD — running container steps...");
+
+            exec("docker stop github-api && docker rm github-api || true", { stdio: 'inherit' });
+            exec("docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04", { stdio: 'inherit' });
+            exec("docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh", { stdio: 'inherit' });
+            exec("docker exec github-api bash -c \"/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
+            exec("docker exec github-api bash -c \"/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
+

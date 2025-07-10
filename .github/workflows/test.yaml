@@ -1,40 +1,24 @@
-name: Runtime-build-test
+- name: Check PR and run container if @ASHU_JD is present
+  uses: actions/github-script@v6
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    script: |
+      const pr = context.payload.pull_request;
+      const title = pr.title || "";
+      const body = pr.body || "";
+      const shouldRun = title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
 
-on:
-  pull_request:
-    branches:
-      - workFlow
+      if (!shouldRun) {
+        console.log("✅ PR does not contain @ASHU_JD — skipping container execution, marking success.");
+        return;
+      }
 
-jobs:
-  runtime-build-test:
-    runs-on: ashu-runner-self-hosted
+      console.log("🚀 PR contains @ASHU_JD — running container steps...");
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check PR title/body and optionally run container
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const pr = context.payload.pull_request;
-            const title = pr.title || "";
-            const body = pr.body || "";
-            const shouldRun = title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
-
-            if (!shouldRun) {
-              console.log("✅ PR does not contain @ASHU_JD — skipping container execution, but marking workflow as success.");
-              return;
-            }
-
-            const exec = require('child_process').execSync;
-
-            console.log("🚀 PR contains @ASHU_JD — running container steps...");
-
-            exec("docker stop github-api && docker rm github-api || true", { stdio: 'inherit' });
-            exec("docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04", { stdio: 'inherit' });
-            exec("docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh", { stdio: 'inherit' });
-            exec("docker exec github-api bash -c \"/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
-            exec("docker exec github-api bash -c \"/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
+      const runCmd = require('child_process').execSync;
+      runCmd("docker stop github-api && docker rm github-api || true", { stdio: 'inherit' });
+      runCmd("docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04", { stdio: 'inherit' });
+      runCmd("docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh", { stdio: 'inherit' });
+      runCmd("docker exec github-api bash -c \"/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
+      runCmd("docker exec github-api bash -c \"/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \\${PIPESTATUS[0]}\"", { stdio: 'inherit' });
 

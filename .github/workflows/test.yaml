@@ -1,39 +1,128 @@
 name: Runtime-build-test
 
 on:
-  push:
+  pull_request:
     branches:
       - workFlow
+
 jobs:
-  container-create:
+  runtime-build-test:
     runs-on: ashu-runner-self-hosted
+
     steps:
-      - name: Container
+      - name: Check if PR title or body contains @ASHU_JD
+        id: check_pr
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title || "";
+            const body = pr.body || "";
+            return title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
+
+      - name: Stop if PR does not contain @ASHU_JD
+        if: steps.check_pr.outputs.result != 'true'
         run: |
-          docker stop github-api && docker rm github-api
+          echo "PR does not contain @ASHU_JD, skipping job."
+          exit 0
+
+      - name: Run container steps
+        if: steps.check_pr.outputs.result == 'true'
+        run: |
+          docker stop github-api && docker rm github-api || true
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
-  copy-script:
-    runs-on: ashu-runner-self-hosted
-    needs: container-create
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Copy script into container
-        run: |
           docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
-  runtime-build:
-    runs-on: ashu-runner-self-hosted
-    needs: copy-script
-    steps:
-      - name: Run script inside container
-        run: docker exec github-api chmod +x /runtime.sh
-      - name: Run the script for build
-        run: |
           docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
-  runtime-test:
-    runs-on: ashu-runner-self-hosted
-    needs: runtime-build
-    steps:
-      - name: Run the script for test
-        run: |
           docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+
+
+
+
+# name: Runtime-build-test
+
+# on:
+#   push:
+#     branches:
+#       - ppc64le_gha
+# jobs:
+#   runtime-buld-test:
+#     runs-on: ubuntu-24.04-ppc64le
+#     steps:
+#       - name: Container
+#         run: |
+#           docker stop github-api && docker rm github-api
+#           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+#           docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+#           docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+#           docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+
+
+  # copy-script:
+  #   runs-on: ubuntu-24.04-ppc64le
+  #   needs: container-create
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Copy script into container
+  #       run: |
+  #         docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+  # runtime-build:
+  #   runs-on: ubuntu-24.04-ppc64le
+  #   needs: copy-script
+  #   steps:
+  #     - name: Run script inside container
+  #       run: docker exec github-api chmod +x /runtime.sh
+  #     - name: Run the script for build
+  #       run: |
+  #         docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+  # runtime-test:
+  #   runs-on: ubuntu-24.04-ppc64le
+  #   needs: runtime-build
+  #   steps:
+  #     - name: Run the script for test
+  #       run: |
+  #         docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+  #         #
+
+
+
+# name: Runtime-build-test
+
+# on:
+#   push:
+#     branches:
+#       - workFlow
+# jobs:
+#   container-create:
+#     runs-on: ashu-runner-self-hosted
+#     steps:
+#       - name: Container
+#         run: |
+#           docker stop github-api && docker rm github-api
+#           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+#   copy-script:
+#     runs-on: ashu-runner-self-hosted
+#     needs: container-create
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#       - name: Copy script into container
+#         run: |
+#           docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+#   runtime-build:
+#     runs-on: ashu-runner-self-hosted
+#     needs: copy-script
+#     steps:
+#       - name: Run script inside container
+#         run: docker exec github-api chmod +x /runtime.sh
+#       - name: Run the script for build
+#         run: |
+#           docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+#   runtime-test:
+#     runs-on: ashu-runner-self-hosted
+#     needs: runtime-build
+#     steps:
+#       - name: Run the script for test
+#         run: |
+#           docker exec github-api bash -c "/runtime.sh --test 2>&1 | te

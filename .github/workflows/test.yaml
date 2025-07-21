@@ -6,9 +6,11 @@ on:
       - workFlow
 
 jobs:
-  runtime-build-test:
+  PR-Check:
+    name: Check PR for @ASHU_JD
     runs-on: ashu-runner-self-hosted
-
+    outputs:
+      run_job: ${{ steps.set_output.outputs.run_job }}
     steps:
       - name: Check if PR title or body contains @ASHU_JD
         id: check_pr
@@ -19,22 +21,33 @@ jobs:
             const pr = context.payload.pull_request;
             const title = pr.title || "";
             const body = pr.body || "";
-            return title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
+            const shouldRun = title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
+            core.setOutput("run_job", shouldRun);
 
-      - name: Stop if PR does not contain @ASHU_JD
-        if: steps.check_pr.outputs.result != 'true'
-        run: |
-          echo "PR does not contain @ASHU_JD, skipping job."
-          exit 0
+      - name: Set output
+        id: set_output
+        run: echo "run_job=${{ steps.check_pr.outputs.run_job }}" >> $GITHUB_OUTPUT
 
-      - name: Run container steps
-        if: steps.check_pr.outputs.result == 'true'
+  Runtime-Build-Test:
+    name: Runtime Build and Test
+    needs: check-pr
+    if: needs.check-pr.outputs.run_job == 'true'
+    runs-on: ashu-runner-self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Container
         run: |
-          docker stop github-api && docker rm github-api || true
+          docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
-          ls -la && ls -la ../ && pwd
-          docker cp $(pwd)/.github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+      - name: Copy script
+        run: |
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
           docker exec github-api chmod +x /runtime.sh
-          docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
-          docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
-
+      - name: Build
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

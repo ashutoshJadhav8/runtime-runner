@@ -13,7 +13,7 @@ jobs:
       run_job: ${{ steps.set_output.outputs.run_job }}
     steps:
       - name: Check if PR title or body contains @ASHU_JD
-        id: check_pr
+        id: PR-Check
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -26,12 +26,12 @@ jobs:
 
       - name: Set output
         id: set_output
-        run: echo "run_job=${{ steps.check_pr.outputs.run_job }}" >> $GITHUB_OUTPUT
+        run: echo "run_job=${{ steps.PR-Check.outputs.run_job }}" >> $GITHUB_OUTPUT
 
   Runtime-Build-Test:
     name: Runtime Build and Test
-    needs: check-pr
-    if: needs.check-pr.outputs.run_job == 'true'
+    needs: PR-Check
+    if: needs.PR-Check.outputs.run_job == 'true'
     runs-on: ashu-runner-self-hosted
 
     steps:

@@ -1,0 +1,17 @@
+name: crossbuild
+
+on:
+  push:
+    branches:
+      - try-GHA
+jobs:
+  cross-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: cross-build
+        run: |
+          export ARCH=ppc64le && git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git && cd dotnet-s390x
+          ./docker/run ./dotnet-cleanup
+          ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 
+          ./docker/run ./dotnet-prepare
+          ./docker/run ./dotnet-build 2>&1 | tee build.log

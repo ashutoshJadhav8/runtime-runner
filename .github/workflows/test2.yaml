@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: cross-build
         run: |
+          git config --global user.name "ashutoshjadhav8"
+          git config --global user.email "ashutosh_jadhav@persistent.com"
           export ARCH=ppc64le && git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git && cd dotnet-s390x
           ./docker/run ./dotnet-cleanup
           ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 

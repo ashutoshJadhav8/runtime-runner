@@ -6,7 +6,7 @@ on:
       - try-GHA
 jobs:
   cross-build:
-    runs-on: ashu-runner-self-hosted
+    runs-on: ubuntu:latest
     steps:
       - name: cross-build
         run: |

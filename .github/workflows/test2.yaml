@@ -13,7 +13,7 @@ jobs:
           apt update && apt upgrade -y
           git config --global user.name "ashutoshjadhav8"
           git config --global user.email "ashutosh_jadhav@persistent.com"
-          export ARCH=ppc64le && git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git && cd dotnet-s390x && git apply crossbuild.patch 
+          export ARCH=ppc64le && git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git && cd dotnet-s390x && git apply crossbuild.patch
       - name: cleanup
         run: |
           ./docker/run ./dotnet-cleanup

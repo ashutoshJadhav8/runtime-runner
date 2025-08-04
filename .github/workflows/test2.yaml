@@ -14,7 +14,10 @@ jobs:
           apt update && apt upgrade -y
           git config --global user.name "ashutoshjadhav8"
           git config --global user.email "ashutosh_jadhav@persistent.com"
-          export ARCH=ppc64le && git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git && cd dotnet-s390x && sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
+          export ARCH=ppc64le 
+          git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git 
+          cd dotnet-s390x
+          sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
           ./docker/run ./dotnet-cleanup
           ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 
           ./docker/run ./dotnet-prepare

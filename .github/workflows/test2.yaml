@@ -16,7 +16,13 @@ jobs:
           #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git
           export ARCH=ppc64le
-          ls -la 
+          ls -la
+          cd runtime-runner
+          ls 
+          cd  .github
+          ls
+          cd workflows
+          ls
           ls -la runtime-runner/.github/workflows/crossbuild2.patch
           pwd
           ls -la .github/workflows/

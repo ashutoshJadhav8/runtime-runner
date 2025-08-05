@@ -17,7 +17,7 @@ jobs:
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git
           export ARCH=ppc64le
           ls -la 
-          ls -la /home/runner/work/runtime-runner/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
+          ls -la runtime-runner/.github/workflows/crossbuild2.patch
           pwd
           ls -la .github/workflows/
           ls -la /home

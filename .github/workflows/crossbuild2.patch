@@ -1,0 +1,52 @@
+diff --git a/dotnet-build b/dotnet-build
+index 6dfcee8..9d778bf 100755
+--- a/dotnet-build
++++ b/dotnet-build
+@@ -107,6 +107,7 @@ function build_runtime {
+             tar -C artifacts/obj/mono/[Ll]inux."$ARCH"."$runtime_conf"/out/lib -czf "$OUTPUTDIR"/libmono-profiler-log-"$ARCH".tar.gz libmono-profiler-log.so
+         fi
+     fi
++    rm -rf artifacts .packages
+     popd
+ }
+ 
+@@ -131,6 +132,7 @@ function build_msbuild {
+     if [ -z ${SKIP_PACKAGE_MSBUILD+x} ] && [ ! -e .skip-package ]; then
+         for I in artifacts/packages/Release/*/*; do cp "$I" "$PACKAGESDIR"; done
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -157,6 +159,7 @@ function build_roslyn {
+     if [ -z ${SKIP_PACKAGE_ROSLYN+x} ] && [ ! -e .skip-package ]; then
+         for I in artifacts/packages/Release/*/*.nupkg; do cp "$I" "$PACKAGESDIR"; done
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -213,6 +216,7 @@ function build_sdk {
+         fi
+         cp "artifacts/packages/$sdk_conf/Shipping/dotnet-sdk-$SDK_VERSION-linux-$ARCH.tar.gz" "$OUTPUTDIR"
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -299,13 +303,14 @@ function build_aspnetcore {
+         cp "artifacts/installers/$aspnetcore_conf/aspnetcore_base_runtime.version" "$DOWNLOADDIR/aspnetcore/Runtime/$aspnetcore_internal_version"
+         cp "artifacts/packages/$aspnetcore_conf/Shipping/Microsoft.AspNetCore.App.Runtime.linux-$ARCH.$ASPNETCORE_VERSION.nupkg" "$OUTPUTDIR"
+     fi
++    rm -rf .packages node_modules artifacts
+     popd
+ }
+ 
+ if [ "$#" -gt 0 ]; then
+     projects=("$@")
+ else
+-    projects=(runtime msbuild roslyn aspnetcore sdk)
++    projects=(runtime aspnetcore sdk)
+ fi
+ 
+ export NuGetAudit=false

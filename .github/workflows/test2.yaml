@@ -17,7 +17,7 @@ jobs:
           export ARCH=ppc64le
           ls -la 
           pwd
-          sudo cp .github/workflows/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner
+          sudo cp /home/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner
           #git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git
           cd dotnet-s390x
           # sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build

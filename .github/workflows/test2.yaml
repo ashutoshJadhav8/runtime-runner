@@ -13,8 +13,8 @@ jobs:
           pwd
           set -x
           #sudo apt update && apt upgrade -y
-          #sudo git config --global user.name "ashutoshjadhav8"
-          #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
+          sudo git config --global user.name "ashutoshjadhav8"
+          sudo git config --global user.email "ashutosh_jadhav@persistent.com"
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git
           cd runtime-runner
           git checkout try-GHA

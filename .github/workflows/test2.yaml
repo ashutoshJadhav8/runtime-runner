@@ -11,7 +11,7 @@ jobs:
       - name: cross-build
         run: |
           pwd
-          sudo apt update && apt upgrade -y
+          #sudo apt update && apt upgrade -y
           #sudo git config --global user.name "ashutoshjadhav8"
           #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git

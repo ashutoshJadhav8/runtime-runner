@@ -11,6 +11,7 @@ jobs:
       - name: cross-build
         run: |
           pwd
+          set -x
           #sudo apt update && apt upgrade -y
           #sudo git config --global user.name "ashutoshjadhav8"
           #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
@@ -26,7 +27,7 @@ jobs:
           cd dotnet-s390x
           git apply ../runtime-runner/.github/workflows/crossbuild2.patch
           # sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
-          git apply /home/runner/work/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
+          #git apply /home/runner/work/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
           ./docker/run ./dotnet-cleanup
           ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 
           ./docker/run ./dotnet-prepare

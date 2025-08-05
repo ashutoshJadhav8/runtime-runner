@@ -18,7 +18,7 @@ jobs:
           git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git
           cd dotnet-s390x
           # sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
-          git apply /root/ashutosh/api/runtime-runner/.github/workflows/crossbuild2.patch 
+          git apply /home/runner/work/runtime-runner/.github/workflows/crossbuild2.patch 
           ./docker/run ./dotnet-cleanup
           ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 
           ./docker/run ./dotnet-prepare

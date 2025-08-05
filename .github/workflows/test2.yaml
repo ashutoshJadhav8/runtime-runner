@@ -15,7 +15,9 @@ jobs:
           #sudo git config --global user.name "ashutoshjadhav8"
           #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git
+          cd runtime-runner
           git checkout try-GHA
+          cd ../
           export ARCH=ppc64le
           #ls -la /home/
           #sudo cp /home/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner

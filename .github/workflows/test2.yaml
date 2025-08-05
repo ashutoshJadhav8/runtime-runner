@@ -15,21 +15,13 @@ jobs:
           #sudo git config --global user.name "ashutoshjadhav8"
           #sudo git config --global user.email "ashutosh_jadhav@persistent.com"
           git clone https://github.com/ashutoshJadhav8/runtime-runner.git
+          git checkout try-GHA
           export ARCH=ppc64le
-          ls -la
-          cd runtime-runner
-          ls 
-          cd  .github
-          ls
-          cd workflows
-          ls
-          ls -la runtime-runner/.github/workflows/crossbuild2.patch
-          pwd
-          ls -la .github/workflows/
-          ls -la /home
-          sudo cp /home/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner
-          #git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git
+          #ls -la /home/
+          #sudo cp /home/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner
+          git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git
           cd dotnet-s390x
+          git apply /home/runner/work/runtime-runner/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
           # sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
           git apply /home/runner/work/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
           ./docker/run ./dotnet-cleanup

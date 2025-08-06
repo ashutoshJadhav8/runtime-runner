@@ -1,0 +1,110 @@
+diff --git a/dotnet-build b/dotnet-build
+index 6dfcee8..b3b9d31 100755
+--- a/dotnet-build
++++ b/dotnet-build
+@@ -72,9 +72,9 @@ function build_runtime {
+         ROOTFS_DIR=/ ./build.sh "${runtime_build_flags[@]}"
+     fi
+     if [ -z ${SKIP_PACKAGE_RUNTIME+x} ] && [ ! -e .skip-package ]; then
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Ref.$runtime_version.nupkg" "$PACKAGESDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Ref.$runtime_version.nupkg" "$PACKAGESDIR"
+         mkdir -p "$DOWNLOADDIR/Runtime/$runtime_version"
+         cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$DOWNLOADDIR/Runtime/$runtime_version"
+         # Necessary for incoherent packages: pretend that the runtime that we built
+@@ -84,29 +84,30 @@ function build_runtime {
+         cp \
+             "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" \
+             "$DOWNLOADDIR/Runtime/$aspnetcore_transport_version/dotnet-runtime-$aspnetcore_runtime_version-linux-$ARCH.tar.gz"
+-        cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$OUTPUTDIR"
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
+-        if ! git merge-base --is-ancestor e68313e HEAD; then
+-            cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-symbols-linux-$ARCH-$runtime_version.tar.gz" "$OUTPUTDIR"
+-        else
+-            cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
+-            cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
+-        fi
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
+-        if [ "$runtime_major_version" -lt 9 ]; then
+-            # https://github.com/dotnet/runtime/pull/91655
+-            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHost.$runtime_version.nupkg" "$OUTPUTDIR"
+-            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHostPolicy.$runtime_version.nupkg" "$OUTPUTDIR"
+-            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHostResolver.$runtime_version.nupkg" "$OUTPUTDIR"
+-        fi
+-        if [ "$(grep -oP '<PreReleaseVersionLabel>\K[^<]+' eng/Versions.props)" != "servicing" ] || git merge-base --is-ancestor bb5f473 HEAD; then
+-            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.ILAsm.$runtime_version.nupkg" "$OUTPUTDIR"
+-            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.ILDAsm.$runtime_version.nupkg" "$OUTPUTDIR"
+-        fi
+-        if [ "$ARCH" = s390x ]; then
+-            tar -C artifacts/obj/mono/[Ll]inux."$ARCH"."$runtime_conf"/out/lib -czf "$OUTPUTDIR"/libmono-profiler-log-"$ARCH".tar.gz libmono-profiler-log.so
+-        fi
++        #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$OUTPUTDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
++        #if ! git merge-base --is-ancestor e68313e HEAD; then
++            #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-symbols-linux-$ARCH-$runtime_version.tar.gz" "$OUTPUTDIR"
++        #else
++            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
++            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
++        #fi
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
++        #if [ "$runtime_major_version" -lt 9 ]; then
++        #    # https://github.com/dotnet/runtime/pull/91655
++        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHost.$runtime_version.nupkg" "$OUTPUTDIR"
++        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHostPolicy.$runtime_version.nupkg" "$OUTPUTDIR"
++        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHostResolver.$runtime_version.nupkg" "$OUTPUTDIR"
++        #fi
++        #if [ "$(grep -oP '<PreReleaseVersionLabel>\K[^<]+' eng/Versions.props)" != "servicing" ] || git merge-base --is-ancestor bb5f473 HEAD; then
++        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.ILAsm.$runtime_version.nupkg" "$OUTPUTDIR"
++        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.ILDAsm.$runtime_version.nupkg" "$OUTPUTDIR"
++        #fi
++        #if [ "$ARCH" = s390x ]; then
++        #    tar -C artifacts/obj/mono/[Ll]inux."$ARCH"."$runtime_conf"/out/lib -czf "$OUTPUTDIR"/libmono-profiler-log-"$ARCH".tar.gz libmono-profiler-log.so
++        #fi
+     fi
++    rm -rf artifacts .packages
+     popd
+ }
+ 
+@@ -131,6 +132,7 @@ function build_msbuild {
+     if [ -z ${SKIP_PACKAGE_MSBUILD+x} ] && [ ! -e .skip-package ]; then
+         for I in artifacts/packages/Release/*/*; do cp "$I" "$PACKAGESDIR"; done
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -157,6 +159,7 @@ function build_roslyn {
+     if [ -z ${SKIP_PACKAGE_ROSLYN+x} ] && [ ! -e .skip-package ]; then
+         for I in artifacts/packages/Release/*/*.nupkg; do cp "$I" "$PACKAGESDIR"; done
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -213,6 +216,7 @@ function build_sdk {
+         fi
+         cp "artifacts/packages/$sdk_conf/Shipping/dotnet-sdk-$SDK_VERSION-linux-$ARCH.tar.gz" "$OUTPUTDIR"
+     fi
++    rm -rf "artifacts"
+     popd
+ }
+ 
+@@ -299,13 +303,14 @@ function build_aspnetcore {
+         cp "artifacts/installers/$aspnetcore_conf/aspnetcore_base_runtime.version" "$DOWNLOADDIR/aspnetcore/Runtime/$aspnetcore_internal_version"
+         cp "artifacts/packages/$aspnetcore_conf/Shipping/Microsoft.AspNetCore.App.Runtime.linux-$ARCH.$ASPNETCORE_VERSION.nupkg" "$OUTPUTDIR"
+     fi
++    rm -rf .packages node_modules artifacts
+     popd
+ }
+ 
+ if [ "$#" -gt 0 ]; then
+     projects=("$@")
+ else
+-    projects=(runtime msbuild roslyn aspnetcore sdk)
++    projects=(runtime aspnetcore sdk)
+ fi
+ 
+ export NuGetAudit=false

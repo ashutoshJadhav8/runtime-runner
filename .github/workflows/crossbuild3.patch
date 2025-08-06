@@ -1,5 +1,5 @@
 diff --git a/dotnet-build b/dotnet-build
-index 6dfcee8..94180c4 100755
+index 6dfcee8..070bea6 100755
 --- a/dotnet-build
 +++ b/dotnet-build
 @@ -72,9 +72,9 @@ function build_runtime {
@@ -7,10 +7,9 @@ index 6dfcee8..94180c4 100755
      fi
      if [ -z ${SKIP_PACKAGE_RUNTIME+x} ] && [ ! -e .skip-package ]; then
 -        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
--        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
--        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Ref.$runtime_version.nupkg" "$PACKAGESDIR"
 +        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
-+        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
+         cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$PACKAGESDIR"
+-        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Ref.$runtime_version.nupkg" "$PACKAGESDIR"
 +        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Ref.$runtime_version.nupkg" "$PACKAGESDIR"
          mkdir -p "$DOWNLOADDIR/Runtime/$runtime_version"
          cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$DOWNLOADDIR/Runtime/$runtime_version"

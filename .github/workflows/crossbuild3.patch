@@ -1,5 +1,5 @@
 diff --git a/dotnet-build b/dotnet-build
-index 6dfcee8..b3b9d31 100755
+index 6dfcee8..94180c4 100755
 --- a/dotnet-build
 +++ b/dotnet-build
 @@ -72,9 +72,9 @@ function build_runtime {
@@ -27,7 +27,15 @@ index 6dfcee8..b3b9d31 100755
 -            cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
 -            cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
 -        fi
--        cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$OUTPUTDIR"
++        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
++        #if ! git merge-base --is-ancestor e68313e HEAD; then
++            #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-symbols-linux-$ARCH-$runtime_version.tar.gz" "$OUTPUTDIR"
++        #else
++            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
++            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
++        #fi
+         cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
 -        if [ "$runtime_major_version" -lt 9 ]; then
 -            # https://github.com/dotnet/runtime/pull/91655
 -            cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHost.$runtime_version.nupkg" "$OUTPUTDIR"
@@ -41,15 +49,6 @@ index 6dfcee8..b3b9d31 100755
 -        if [ "$ARCH" = s390x ]; then
 -            tar -C artifacts/obj/mono/[Ll]inux."$ARCH"."$runtime_conf"/out/lib -czf "$OUTPUTDIR"/libmono-profiler-log-"$ARCH".tar.gz libmono-profiler-log.so
 -        fi
-+        #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-$runtime_version-linux-$ARCH.tar.gz" "$OUTPUTDIR"
-+        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
-+        #if ! git merge-base --is-ancestor e68313e HEAD; then
-+            #cp "artifacts/packages/$runtime_conf/Shipping/dotnet-runtime-symbols-linux-$ARCH-$runtime_version.tar.gz" "$OUTPUTDIR"
-+        #else
-+            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Host.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
-+            #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.symbols.nupkg" "$OUTPUTDIR"
-+        #fi
-+        #cp "artifacts/packages/$runtime_conf/Shipping/Microsoft.NETCore.App.Runtime.linux-$ARCH.$runtime_version.nupkg" "$OUTPUTDIR"
 +        #if [ "$runtime_major_version" -lt 9 ]; then
 +        #    # https://github.com/dotnet/runtime/pull/91655
 +        #    cp "artifacts/packages/$runtime_conf/Shipping/runtime.linux-$ARCH.Microsoft.NETCore.DotNetHost.$runtime_version.nupkg" "$OUTPUTDIR"

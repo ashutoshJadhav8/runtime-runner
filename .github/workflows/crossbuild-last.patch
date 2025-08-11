@@ -1,5 +1,5 @@
 diff --git a/dotnet-build b/dotnet-build
-index 6dfcee8..d948f3d 100755
+index 6dfcee8..b581681 100755
 --- a/dotnet-build
 +++ b/dotnet-build
 @@ -74,7 +74,7 @@ function build_runtime {
@@ -67,7 +67,7 @@ index 6dfcee8..d948f3d 100755
      if [ -z ${SKIP_PACKAGE_MSBUILD+x} ] && [ ! -e .skip-package ]; then
          for I in artifacts/packages/Release/*/*; do cp "$I" "$PACKAGESDIR"; done
      fi
-+    rm -rf "artifacts"
++    rm -rf artifacts ../runtime
      popd
  }
  
@@ -75,7 +75,7 @@ index 6dfcee8..d948f3d 100755
      if [ -z ${SKIP_PACKAGE_ROSLYN+x} ] && [ ! -e .skip-package ]; then
          for I in artifacts/packages/Release/*/*.nupkg; do cp "$I" "$PACKAGESDIR"; done
      fi
-+    rm -rf "artifacts"
++    rm -rf artifacts ../msbuild
      popd
  }
  
@@ -83,16 +83,17 @@ index 6dfcee8..d948f3d 100755
          fi
          cp "artifacts/packages/$sdk_conf/Shipping/dotnet-sdk-$SDK_VERSION-linux-$ARCH.tar.gz" "$OUTPUTDIR"
      fi
-+    rm -rf "artifacts"
++    rm -rf artifacts ../roslyn
      popd
  }
  
-@@ -299,13 +303,14 @@ function build_aspnetcore {
+@@ -299,13 +303,15 @@ function build_aspnetcore {
          cp "artifacts/installers/$aspnetcore_conf/aspnetcore_base_runtime.version" "$DOWNLOADDIR/aspnetcore/Runtime/$aspnetcore_internal_version"
          cp "artifacts/packages/$aspnetcore_conf/Shipping/Microsoft.AspNetCore.App.Runtime.linux-$ARCH.$ASPNETCORE_VERSION.nupkg" "$OUTPUTDIR"
      fi
-+    rm -rf .packages node_modules artifacts
++    rm -rf .packages node_modules artifacts ../sdk
      popd
++    rm -rf aspnetcore installer dotnet home 
  }
  
  if [ "$#" -gt 0 ]; then

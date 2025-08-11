@@ -1,9 +1,9 @@
 name: crossbuild
 
-on:
-  push:
-    branches:
-      - try-GHA
+  #on:
+  #push:
+  #  branches:
+  #   - try-GHA
 jobs:
   cross-build:
     runs-on: ubuntu-latest

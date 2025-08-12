@@ -5,13 +5,13 @@ name: crossbuild
 #    branches:
 #      - try-GHA
 
-on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-    branches:
-      - workFlow
+  #on:
+  #pull_request:
+  #  types:
+  #    - opened
+  #    - reopened
+  #  branches:
+  #    - workFlow
 
 
 jobs:

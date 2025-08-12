@@ -1,15 +1,30 @@
 name: runtime-build-test
 
-on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-    branches:
-      - workFlow
+  #on:
+  #pull_request:
+  #  types:
+  #    - opened
+  #    - reopened
+  #  branches:
+  #    - workFlow
 jobs:
+  check-ms-bot:
+    runs-on: ashu-runner-self-hosted
+    steps:
+      - name: Check if PR title or body
+        id: check
+        run: |
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "PR Body: ${{ github.event.pull_request.body }}"
+
+          if [[ "${{ github.event.pull_request.title }}" == *"@ASH_JD"* ]] || [[ "${{ github.event.pull_request.body }}" == *"@ASH_JD"* ]]; then
+            exit 0
+          else
+            exit 1
+          fi
   container-create:
     runs-on: ashu-runner-self-hosted
+    needs: check-ms-bot
     steps:
       - name: Container
         run: |
@@ -53,7 +68,7 @@ jobs:
         run: |
           cd $HOME
           export WORK_PATH=$(pwd)
-          export Dir_NAME=commit-${GITHUB_SHA::7}-date-$(date +'%Y-%m-%d_%H-%M-%S')
+          export Dir_NAME=log-${GITHUB_SHA::7}-$(date +'%Y-%m-%d_%H-%M-%S')
           mkdir -p $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-build.log $WORK_PATH/runtime-logs/$Dir_NAME
           docker cp github-api:/tmp/runtime-test.log $WORK_PATH/runtime-logs/$Dir_NAME
@@ -64,5 +79,4 @@ jobs:
   #   steps:
   #     - name: Copy logs of build and test to local machine
   #       run: docker stop github-api && docker rm github-api
-
 

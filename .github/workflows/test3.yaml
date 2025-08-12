@@ -1,0 +1,36 @@
+name: crossbuild
+
+#on:
+#  push:
+#    branches:
+#      - try-GHA
+
+  #on:
+  #pull_request:
+  #  types:
+  #    - opened
+  #    - reopened
+  #  branches:
+  #    - workFlow
+
+
+jobs:
+  cross-build:
+    runs-on: ashu-runner-self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Container
+        run: |
+          docker stop github-api && docker rm github-api
+          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+      - name: Copy script
+        run: |
+          docker cp /root/ashutosh/api/runtime-runner/.github/workflows/runtime.sh github-api:/runtime.sh
+          docker exec github-api chmod +x /runtime.sh
+      - name: Build
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

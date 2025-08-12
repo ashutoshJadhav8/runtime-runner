@@ -1,0 +1,36 @@
+name: crossbuild
+
+  #on:
+  #push:
+  #  branches:
+  #   - try-GHA
+jobs:
+  cross-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: cross-build
+        run: |
+          pwd
+          set -x
+          #sudo apt update && apt upgrade -y
+          git config --global user.name "ashutoshjadhav8"
+          git config --global user.email "ashutosh_jadhav@persistent.com"
+          #sudo git config user.name "ashutoshjadhav8"
+          #sudo git config user.email "ashutosh_jadhav@persistent.com"         
+          git clone https://github.com/ashutoshJadhav8/runtime-runner.git
+          cd runtime-runner
+          git checkout try-GHA
+          cd ../
+          ls -la /home/runner/work/runtime-runner/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
+          export ARCH=ppc64le
+        
+          #sudo cp /home/crossbuild2.patch /home/runner/work/runtime-runner/runtime-runner
+          git clone --recurse-submodules  https://github.com/IBM/dotnet-s390x.git
+          cd dotnet-s390x
+          git apply ../runtime-runner/.github/workflows/crossbuild3.patch
+          # sed -i '/^\s*popd/i\ \ \ \ rm -rf "artifacts"' dotnet-build
+          #git apply /home/runner/work/runtime-runner/runtime-runner/.github/workflows/crossbuild2.patch
+          ./docker/run ./dotnet-cleanup
+          ./docker/run ./dotnet-bump "10.0.100-preview.6.25358.103" #its a sdk tag 
+          ./docker/run ./dotnet-prepare
+          ./docker/run ./dotnet-build

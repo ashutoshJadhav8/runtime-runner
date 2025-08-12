@@ -48,9 +48,9 @@ jobs:
       - name: Build
         if: steps.check_pr.outputs.should_run == 'true'
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
 
       - name: Test
         if: steps.check_pr.outputs.should_run == 'true'
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

@@ -1,3 +1,10 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - workFlow
+
 jobs:
   check-tag:
     runs-on: ubuntu-latest

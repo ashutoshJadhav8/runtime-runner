@@ -120,7 +120,7 @@
     git checkout "$REF"
     COMMIT=$(git rev-parse HEAD)
     echo "$REPO is at $COMMIT"
-
+	####
     sed -i -E '/"sdk": \{/!b;n;s/"version": "[^"]+"/"version": "'"$sdk_version"'"/' global.json
     sed -i -E '/"tools": \{/!b;n;s/"dotnet": "[^"]+"/"dotnet": "'"$sdk_version"'"/' global.json
 

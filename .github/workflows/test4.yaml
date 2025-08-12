@@ -1,40 +1,56 @@
-name: runtime-build-test
+name: Runtime-build-test
 
 on:
   pull_request:
-    types:
-      - opened
-      - reopened
     branches:
       - workFlow
-jobs:
-  check-ms-bot:
-    runs-on: ashu-runner-self-hosted
-    steps:
-      - name: Check if PR title or body
-        id: check
-        run: |
-          echo "PR Title: ${{ github.event.pull_request.title }}"
-          echo "PR Body: ${{ github.event.pull_request.body }}"
 
-          if [[ "${{ github.event.pull_request.title }}" == *"@ASH_JD"* ]] || [[ "${{ github.event.pull_request.body }}" == *"@ASH_JD"* ]]; then
-            exit 0
-          else
-            exit 1
-          fi
+jobs:
+  Runtime-Build-Test:
+    name: Runtime Build and Test
+    runs-on: ashu-runner-self-hosted
+
+    steps:
+      - name: Check if PR title or body contains @ASHU_JD
+        id: check_pr
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title || "";
+            const body = pr.body || "";
+            const shouldRun = title.includes("@ASHU_JD") || body.includes("@ASHU_JD");
+            core.setOutput("should_run", shouldRun);
+
+      - name: Stop if PR check fails
+        if: steps.check_pr.outputs.should_run != 'true'
+        run: |
+          echo "Skipping job because @ASHU_JD not found in PR title/body."
+          exit 0
+
       - name: Checkout code
+        if: steps.check_pr.outputs.should_run == 'true'
         uses: actions/checkout@v4
+
       - name: Container
+        if: steps.check_pr.outputs.should_run == 'true'
         run: |
           docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+
       - name: Copy script
+        if: steps.check_pr.outputs.should_run == 'true'
         run: |
-          docker cp /root/ashutosh/api/runtime-runner/.github/workflows/runtime.sh github-api:/runtime.sh
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
           docker exec github-api chmod +x /runtime.sh
+
       - name: Build
+        if: steps.check_pr.outputs.should_run == 'true'
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+
       - name: Test
+        if: steps.check_pr.outputs.should_run == 'true'
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

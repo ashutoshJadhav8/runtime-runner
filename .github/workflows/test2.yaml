@@ -1,9 +1,11 @@
 name: crossbuild
 
-  #on:
-  #push:
-  #  branches:
-  #   - try-GHA
+on:
+  pull_request:
+    types:
+      - reopened
+    branch:
+      - workFlow
 jobs:
   cross-build:
     runs-on: ubuntu-latest

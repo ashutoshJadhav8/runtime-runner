@@ -1,12 +1,11 @@
 name: runtime-build-test
 
-  #on:
-  #pull_request:
-  #  types:
-  #    - opened
-  #    - reopened
-  #  branches:
-  #    - workFlow
+on:
+  pull_request:
+    types:
+      - reopened
+    branches:
+      - workFlow
 jobs:
   check-ms-bot:
     runs-on: ashu-runner-self-hosted

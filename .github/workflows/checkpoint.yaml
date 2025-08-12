@@ -1,0 +1,14 @@
+jobs:
+  check-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for @ASHU_JD tag
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [[ "$PR_TITLE" == *"@ASHU_JD"* || "$PR_BODY" == *"@ASHU_JD"* ]]; then
+            echo "Tag found. Proceeding."
+          else
+            echo "Tag '@ASHU_JD' not found in PR. Failing."
+            exit 1
+          fi

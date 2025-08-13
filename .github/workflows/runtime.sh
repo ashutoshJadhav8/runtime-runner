@@ -1,4 +1,4 @@
-  #!/bin/bash -e
+  #!/bin/bash -xe
 
   # Runtime build script for ubuntu:22.04, only for CI job
   # docker run -it --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04

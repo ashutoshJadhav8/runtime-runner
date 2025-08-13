@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   CheckPoint:
-    runs-on: ashu-runner-self-hosted
+    runs-on: ubuntu-latest
     if: |
       github.event.comment.body != '' &&
       contains(toJson(github.event.comment.body), '@Dotnet_ppc64le')
@@ -29,22 +29,33 @@ jobs:
           exit 0
 
   runtime-build-test:
-    needs: CheckPoint
+    need: CheckPoint
     runs-on: ashu-runner-self-hosted
     steps:
+      - name: Get PR SHA
+        id: get_pr
+        if: github.event.issue.pull_request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prUrl = context.payload.issue.pull_request.url;
+            const pr = await github.request(prUrl);
+            const sha = pr.data.head.sha;
+            core.setOutput("sha", sha);
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Container
         run: |
           docker stop github-api && docker rm github-api
-          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --network host --name github-api ubuntu:22.04
       - name: Copy script
         run: |
           docker cp /root/ashutosh/api/runtime-runner/.github/workflows/runtime.sh github-api:/runtime.sh
           docker exec github-api chmod +x /runtime.sh
       - name: Build
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref ${{ needs.CheckPoint.outputs.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
       - name: Test
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+          docker exec github-api bash -c "/runtime.sh --ref ${{ needs.CheckPoint.outputs.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

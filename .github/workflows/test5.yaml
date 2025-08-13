@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Print trigger info
         run: |
-        echo "Triggered by PR comment: Dotnet_ppc64le"
+          echo "Triggered by PR comment: Dotnet_ppc64le"
 
       # Add your actual job logic here
       - name: Run PPC64LE Build (example)

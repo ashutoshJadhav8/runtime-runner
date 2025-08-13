@@ -6,9 +6,9 @@ on:
 
 jobs:
   trigger-dotnet-ppc64le:
-    if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, 'Dotnet_ppc64le')
+    #if: |
+    #  github.event.issue.pull_request &&
+    #  contains(github.event.comment.body, 'Dotnet_ppc64le')
     runs-on: ubuntu-latest
     steps:
       - name: Print trigger info

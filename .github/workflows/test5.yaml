@@ -1,4 +1,4 @@
-name: Trigger Jenkins on Mention
+name: Runtime-build-test
 
 on:
   issue_comment:
@@ -8,22 +8,47 @@ permissions:
   issues: write
 
 jobs:
-  trigger-comment-job:
-    runs-on: ubuntu-latest
+  Runtime-Build-Test:
+    name: Runtime Build and Test
+    runs-on: ashu-runner-self-hosted
     if: |
       github.event.comment.body != '' &&
       contains(toJson(github.event.comment.body), '@Dotnet_ppc64le')
 
-  #trigger-dotnet-ppc64le:
-    #if: |
-    #  github.event.issue.pull_request &&
-    # contains(github.event.comment.body, 'Dotnet_ppc64le')
-    #runs-on: ubuntu-latest
     steps:
-      - name: Print trigger info
+      - name: Check if comment contains @Dotnet_ppc64le
+        id: check_comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = context.payload.comment.body || "";
+            const shouldRun = comment.includes("@Dotnet_ppc64le");
+            core.setOutput("should_run", shouldRun);
+      - name: Stop if comment check fails
+        if: steps.check_comment.outputs.should_run != 'true'
         run: |
-          echo "Triggered by PR comment: Dotnet_ppc64le"
+          echo "Skipping job because @Dotnet_ppc64le not found in comment."
+          exit 0
 
-      # Add your actual job logic here
-      - name: Run PPC64LE Build (example)
-        run: echo "Running Dotnet PPC64LE build tasks..."
+      - name: Checkout code
+        if: steps.check_comment.outputs.should_run == 'true'
+        uses: actions/checkout@v4
+      - name: Container
+        if: steps.check_comment.outputs.should_run == 'true'
+        run: |
+          docker stop github-api && docker rm github-api
+          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name github-api ubuntu:22.04
+      - name: Copy script
+        if: steps.check_comment.outputs.should_run == 'true'
+        run: |
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+          docker exec github-api chmod +x /runtime.sh
+      - name: Build
+        if: steps.check_comment.outputs.should_run == 'true'
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        if: steps.check_comment.outputs.should_run == 'true'
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref ${{ github.event.pull_request.head.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

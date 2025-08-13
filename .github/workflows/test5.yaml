@@ -1,0 +1,19 @@
+name: Dotnet PPC64LE Trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger-dotnet-ppc64le:
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, 'Dotnet_ppc64le')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print trigger info
+        run: echo "Triggered by PR comment: Dotnet_ppc64le"
+
+      # Add your actual job logic here
+      - name: Run PPC64LE Build (example)
+        run: echo "Running Dotnet PPC64LE build tasks..."

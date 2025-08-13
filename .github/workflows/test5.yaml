@@ -1,10 +1,19 @@
-name: Dotnet PPC64LE Trigger
+name: Trigger Jenkins on Mention
 
 on:
   issue_comment:
     types: [created]
 
+permissions:
+  issues: write
+
 jobs:
+  trigger-comment-job:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.comment.body != '' &&
+      contains(toJson(github.event.comment.body), '@Dotnet_ppc64le')
+
   trigger-dotnet-ppc64le:
     #if: |
     #  github.event.issue.pull_request &&

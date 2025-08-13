@@ -30,7 +30,7 @@ jobs:
 
   runtime-build-test:
     need: CheckPoint
-    runs-on: ubuntu-24.04-ppc64le
+    runs-on: ashu-runner-self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

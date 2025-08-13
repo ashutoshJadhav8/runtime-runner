@@ -11,19 +11,12 @@ jobs:
   trigger-comment-job:
     runs-on: ubuntu-latest
     if: |
+      github.event.issue.pull_request &&  # ✅ ensures it's a PR comment
       github.event.comment.body != '' &&
-      contains(toJson(github.event.comment.body), '@Dotnet_ppc64le')
-
-  #trigger-dotnet-ppc64le:
-    #if: |
-    #  github.event.issue.pull_request &&
-    # contains(github.event.comment.body, 'Dotnet_ppc64le')
-    #runs-on: ubuntu-latest
+      contains(github.event.comment.body, '@Dotnet_ppc64le')
     steps:
       - name: Print trigger info
-        run: |
-          echo "Triggered by PR comment: Dotnet_ppc64le"
+        run: echo "Triggered by PR comment: @Dotnet_ppc64le"
 
-      # Add your actual job logic here
       - name: Run PPC64LE Build (example)
         run: echo "Running Dotnet PPC64LE build tasks..."

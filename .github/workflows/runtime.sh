@@ -89,27 +89,27 @@
     shift
   done
 
-  if [[ $(uname -m) = "ppc64le" ]]; then
-    add-apt-repository -y ppa:dotnet/backports
-    apt-get update && sudo apt-get upgrade -y
-  fi
-  
-  apt-get update && DEBIAN_FRONTEND="noninteractive" TZ="Asia/Kolkata" apt-get install -y tzdata
+  # if [[ $(uname -m) = "ppc64le" ]]; then
+  #   add-apt-repository -y ppa:dotnet/backports
+  #   apt-get update && sudo apt-get upgrade -y
+  # fi
+
+  # apt-get update && DEBIAN_FRONTEND="noninteractive" TZ="Asia/Kolkata" apt-get install -y tzdata
 
   apt-get -y install bc automake clang cmake findutils git \
                   hostname libtool libkrb5-dev \
                   llvm make python3  liblttng-ust-dev \
                   tar wget jq lld build-essential zlib1g-dev libssl-dev libbrotli-dev
 
-  mkdir dotnet-sdk-$(uname -m)
-  pushd dotnet-sdk-$(uname -m)
-  wget https://github.com/IBM/dotnet-s390x/releases/download/v10.0.100-preview.6.25315.102/dotnet-sdk-10.0.100-preview.6.25315.102-linux-ppc64le.tar.gz
-  mkdir .dotnet
-  tar xvf dotnet-sdk-*linux-$(uname -m).tar.gz -C .dotnet
-  export DOTNET_ROOT=$(pwd)/.dotnet
-  export PATH=$DOTNET_ROOT:$PATH
-  export sdk_version=$(dotnet --list-sdks | cut -d' ' -f1)
-  popd
+  # mkdir dotnet-sdk-$(uname -m)
+  # pushd dotnet-sdk-$(uname -m)
+  # wget https://github.com/IBM/dotnet-s390x/releases/download/v10.0.100-preview.6.25315.102/dotnet-sdk-10.0.100-preview.6.25315.102-linux-ppc64le.tar.gz
+  # mkdir .dotnet
+  # tar xvf dotnet-sdk-*linux-$(uname -m).tar.gz -C .dotnet
+  # export DOTNET_ROOT=$(pwd)/.dotnet
+  # export PATH=$DOTNET_ROOT:$PATH
+  # export sdk_version=$(dotnet --list-sdks | cut -d' ' -f1)
+  # popd
 
   runtime-build()
   {
@@ -120,7 +120,7 @@
     git checkout "$REF"
     COMMIT=$(git rev-parse HEAD)
     echo "$REPO is at $COMMIT"
-	####
+        ####
     sed -i -E '/"sdk": \{/!b;n;s/"version": "[^"]+"/"version": "'"$sdk_version"'"/' global.json
     sed -i -E '/"tools": \{/!b;n;s/"dotnet": "[^"]+"/"dotnet": "'"$sdk_version"'"/' global.json
 

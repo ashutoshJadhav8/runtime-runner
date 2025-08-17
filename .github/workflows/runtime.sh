@@ -111,41 +111,41 @@
   # export sdk_version=$(dotnet --list-sdks | cut -d' ' -f1)
   # popd
 
-  runtime-build()
-  {
-    rm -rf "$(basename "$REPO" .git)"
-    git clone "$REPO"
+runtime-build()
+{
+  rm -rf "$(basename "$REPO" .git)"
+  git clone "$REPO"
 
-    cd "$(basename "$REPO" .git)"
-    git checkout "$REF"
-    COMMIT=$(git rev-parse HEAD)
-    echo "$REPO is at $COMMIT"
-        ####
-    sed -i -E '/"sdk": \{/!b;n;s/"version": "[^"]+"/"version": "'"$sdk_version"'"/' global.json
-    sed -i -E '/"tools": \{/!b;n;s/"dotnet": "[^"]+"/"dotnet": "'"$sdk_version"'"/' global.json
+  cd "$(basename "$REPO" .git)"
+  git checkout "$REF"
+  COMMIT=$(git rev-parse HEAD)
+  echo "$REPO is at $COMMIT"
+      ####
+  sed -i -E '/"sdk": \{/!b;n;s/"version": "[^"]+"/"version": "'"$sdk_version"'"/' global.json
+  sed -i -E '/"tools": \{/!b;n;s/"dotnet": "[^"]+"/"dotnet": "'"$sdk_version"'"/' global.json
 
-    BUILD_DIR="$(pwd)"
-    EXIT_CODE=256
-    BUILD_EXIT_CODE=256
+  BUILD_DIR="$(pwd)"
+  EXIT_CODE=256
+  BUILD_EXIT_CODE=256
 
-    common_args+=(/p:NoPgoOptimize=true --portablebuild "$PORTABLE_BUILD")
-    if [ "$PORTABLE_BUILD" == "false" ]; then
-    common_args+=(/p:DotNetBuildFromSource=true)
-    fi
+  common_args+=(/p:NoPgoOptimize=true --portablebuild "$PORTABLE_BUILD")
+  if [ "$PORTABLE_BUILD" == "false" ]; then
+  common_args+=(/p:DotNetBuildFromSource=true)
+  fi
 
-    common_args+=(--runtimeconfiguration Debug --librariesConfiguration "$CONFIGURATION")
-    common_args+=(/p:PrimaryRuntimeFlavor=Mono --warnAsError false --subset clr+mono+libs+host+packs+libs.tests)
-    common_args+=(/p:UsingToolMicrosoftNetCompilers=false  /p:DotNetBuildSourceOnly=true /p:DotNetBuildTests=true --cmakeargs -DCLR_CMAKE_USE_SYSTEM_BROTLI=true --cmakeargs -DCLR_CMAKE_USE_SYSTEM_ZLIB=true /p:BaseOS=linux-ppc64le)
+  common_args+=(--runtimeconfiguration Debug --librariesConfiguration "$CONFIGURATION")
+  common_args+=(/p:PrimaryRuntimeFlavor=Mono --warnAsError false --subset clr+mono+libs+host+packs+libs.tests)
+  common_args+=(/p:UsingToolMicrosoftNetCompilers=false  /p:DotNetBuildSourceOnly=true /p:DotNetBuildTests=true --cmakeargs -DCLR_CMAKE_USE_SYSTEM_BROTLI=true --cmakeargs -DCLR_CMAKE_USE_SYSTEM_ZLIB=true /p:BaseOS=linux-ppc64le)
 
-    BUILD_EXIT_CODE=0
-    OPENSSL_ENABLE_SHA1_SIGNATURES=1 ./build.sh ${common_args[@]+"${common_args[@]}"} ${build_args[@]+"${build_args[@]}"} || BUILD_EXIT_CODE=$?
-    EXIT_CODE=$BUILD_EXIT_CODE
-    if [ "$EXIT_CODE" -ne 0 ]; then
-      exit 1
-    else
-      exit 0
-    fi
-  }
+  BUILD_EXIT_CODE=0
+  OPENSSL_ENABLE_SHA1_SIGNATURES=1 ./build.sh ${common_args[@]+"${common_args[@]}"} ${build_args[@]+"${build_args[@]}"} || BUILD_EXIT_CODE=$?
+  EXIT_CODE=$BUILD_EXIT_CODE
+  if [ "$EXIT_CODE" -ne 0 ]; then
+    exit 1
+  else
+    exit 0
+  fi
+}
 
   lib_test_build()
   {

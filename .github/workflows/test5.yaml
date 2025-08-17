@@ -1,4 +1,4 @@
-name: Runtime-build-test
+name: Runtime-Build-Test
 
 on:
   issue_comment:

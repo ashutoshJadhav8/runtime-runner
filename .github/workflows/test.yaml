@@ -1,34 +1,26 @@
-name: Runtime-Build-Test
+name: Runtime-build-test
 
 on:
   push:
-    branches: [try]
-
-permissions:
-  issues: write
-
+    branches:
+      - try
 jobs:
   runtime-build-test:
     runs-on: ashu-runner-self-hosted
     steps:
-      - name: Get PR SHA
-        id: get_pr
-        if: github.event.issue.pull_request
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prUrl = context.payload.issue.pull_request.url;
-            const pr = await github.request(prUrl);
-            const sha = pr.data.head.sha;
-            core.setOutput("sha", sha);
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Container
         run: |
           docker stop github-api && docker rm github-api
           docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --network host --name github-api ubuntu:22.04
-          docker cp /root/ashutosh/api/runtime-runner/.github/workflows/runtime.sh github-api:/runtime.sh
+      - name: Copy script
+        run: |
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
           docker exec github-api chmod +x /runtime.sh
-          docker exec github-api bash -c "/runtime.sh --ref ${{ steps.get_pr.outputs.sha }} --build --sdk_version 10.0.100-preview.6.25315.102 2>&1"
-          docker exec github-api bash -c "/runtime.sh --ref ${{ steps.get_pr.outputs.sha }} --test --sdk_version 10.0.100-preview.6.25315.102 2>&1"
+      - name: Build
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"

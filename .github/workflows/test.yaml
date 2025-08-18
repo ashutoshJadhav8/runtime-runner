@@ -81,4 +81,3 @@ jobs:
     steps:
       - name: Print cancel message
         run: echo "Job is canceled as per comment command."
-

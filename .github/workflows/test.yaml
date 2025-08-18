@@ -10,6 +10,7 @@ permissions:
 jobs:
   CheckPoint:
     runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@Dotnet_ppc64le')
     outputs:
       command: ${{ steps.check_comment.outputs.command }}
     steps:

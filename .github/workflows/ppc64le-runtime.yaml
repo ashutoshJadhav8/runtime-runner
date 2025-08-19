@@ -34,7 +34,7 @@ jobs:
   runtime-build-test:
     needs: CheckPoint
     if: needs.CheckPoint.outputs.command == 'build'
-    runs-on: ashu-runner-self-hosted
+    runs-on: ubuntu-24.04-ppc64le-p10
     steps:
       - name: Get PR SHA
         id: get_pr
@@ -72,7 +72,7 @@ jobs:
   cancel-job:
     needs: CheckPoint
     if: needs.CheckPoint.outputs.command == 'cancel'
-    runs-on: ashu-runner-self-hosted
+    runs-on: ubuntu-24.04-ppc64le-p10
     steps:
       - name: Print cancel message
         run: echo "Job is canceled as per comment command."

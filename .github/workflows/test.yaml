@@ -69,6 +69,7 @@ jobs:
 
       - name: Copy test result summary from container
         run: |
+          rm -rf ./test-summary.txt
           docker cp github-api:/test-summary.txt ./test-summary.txt
 
       - name: Comment test summary on PR

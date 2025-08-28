@@ -1,5 +1,5 @@
 rm -rf /test-summary.txt
-echo "ashu this is from bash script"
+echo "This is from bash script"
 NUM=0
 sdk_versions=0
 REF=0

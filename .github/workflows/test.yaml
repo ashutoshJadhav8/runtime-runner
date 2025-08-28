@@ -78,10 +78,6 @@ jobs:
         with:
           github-token: ${{ secrets.GH_WORK }}
           script: |
-            const fs = ""
-            const body = ""
-            const issue_number = ""
-
             const fs = require('fs');
             const body = fs.readFileSync('test-summary.txt', 'utf8');
             const issue_number = context.issue.number;

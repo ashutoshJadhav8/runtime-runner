@@ -1,3 +1,5 @@
+rm -rf /test-summary.txt
+
 echo "ashu this is from bash script"
 
  NUM=0

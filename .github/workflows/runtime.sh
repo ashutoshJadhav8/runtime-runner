@@ -1,1 +1,1 @@
-echo "ashu this is from bash script" /test-summary.txt
+echo "ashu this is from bash script" | tee /test-summary.txt

@@ -1,4 +1,3 @@
-rm -rf /test-summary.txt
 echo "This is from bash script" | tee /test-summary.txt
 NUM=0
 sdk_versions=0

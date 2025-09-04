@@ -69,8 +69,6 @@ jobs:
           docker cp github-api:/test-summary.txt ./test-summary.txt
 
   ppc64le-result-status:
-    needs: [ppc64le-trigger, ppc64le-runtime-build-test]
-    if: always() && needs.ppc64le-trigger.outputs.command == 'build' && github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
       - name: Set failure flag

@@ -68,6 +68,13 @@ jobs:
           rm -rf ./test-summary.txt
           docker cp github-api:/test-summary.txt ./test-summary.txt
 
+      - name: Upload Script-details artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary.txt
+          path: ./test-summary.txt
+
   ppc64le-result-status:
     needs: runtime-build-test
     runs-on: ubuntu-latest

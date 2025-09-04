@@ -1,8 +1,9 @@
 name: Runtime-Build-Test
 
 on:
-  issue_comment:
-    types: [created, edited]
+  push
+  #  issue_comment:
+  #  types: [created, edited]
 
 permissions:
   issues: write

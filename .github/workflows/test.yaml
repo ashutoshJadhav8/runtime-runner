@@ -84,14 +84,12 @@ jobs:
         run: echo "status=${{ needs.ppc64le-runtime-build-test.result }}" >> $GITHUB_OUTPUT
 
       - name: Download test-summary.txt artifact
-        if: steps.check-status.outputs.status == 'success'
         uses: actions/download-artifact@v4
         with:
           name: script-details
           path: .
 
       - name: Comment success test summary on PR
-        if: steps.check-status.outputs.status == 'success'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GH_WORK }}

@@ -63,6 +63,12 @@ jobs:
       - name: Test
         run: |
           docker exec github-api bash -c "/runtime.sh --ref ${{ steps.get_pr.outputs.sha }} --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+
+      - name: Copy test result summary from container
+        run: |
+          rm -rf ./Script-details
+          docker cp github-api:/Script-details ./Script-details
+
   ppc64le-result-status:
     needs: ppc64le-runtime-build-test
     if: always() && needs.ppc64le-trigger.outputs.command == 'build' && github.event.issue.pull_request

@@ -1773,6 +1773,11 @@ void CallArgs::AddFinalArgsAndDetermineABIInfo(Compiler* comp, GenTreeCall* call
         InsertAfterThisOrFirst(comp, NewCallArg::Primitive(arg).WellKnown(WellKnownArg::PInvokeCookie));
         // put destination into R10/EAX
         arg = comp->gtClone(call->gtCallAddr, true);
+        // On x64 the pinvoke target is passed in r10 which is the same
+        // register as the gs cookie check may use. That would be a problem if
+        // this was a tailcall, but we do not tailcall functions with
+        // non-standard added args except indirection cells currently.
+        assert(!call->IsFastTailCall());
         InsertAfterThisOrFirst(comp, NewCallArg::Primitive(arg).WellKnown(WellKnownArg::PInvokeTarget));
 
         // finally change this call to a helper call
@@ -4210,18 +4215,6 @@ bool Compiler::fgCanFastTailCall(GenTreeCall* callee, const char** failReason)
         return false;
     }
 
-#ifdef TARGET_AMD64
-    // Needed for Jit64 compat.
-    // In future, enabling fast tail calls from methods that need GS cookie
-    // check would require codegen side work to emit GS cookie check before a
-    // tail call.
-    if (getNeedsGSSecurityCookie())
-    {
-        reportFastTailCallDecision("GS Security cookie check required");
-        return false;
-    }
-#endif
-
     // If the NextCallReturnAddress intrinsic is used we should do normal calls.
     if (info.compHasNextCallRetAddr)
     {
@@ -6608,8 +6601,7 @@ GenTree* Compiler::fgExpandVirtualVtableCallTarget(GenTreeCall* call)
                                             &isRelative);
 
     // Dereference the this pointer to obtain the method table, it is called vtab below
-    assert(VPTR_OFFS == 0); // We have to add this value to the thisPtr to get the methodTable
-    GenTree* vtab = gtNewIndir(TYP_I_IMPL, thisPtr, GTF_IND_INVARIANT);
+    GenTree* vtab = gtNewMethodTableLookup(thisPtr);
 
     if (fgGlobalMorph)
     {
@@ -8420,12 +8412,14 @@ DONE_MORPHING_CHILDREN:
                     // We're lucky to catch a constant here while importer was not
                     JITDUMP("true\n");
                     DEBUG_DESTROY_NODE(tree, op1);
-                    tree = gtNewIconNode(1);
+                    tree = gtNewTrue();
                 }
                 else
                 {
                     JITDUMP("false\n");
-                    tree = gtWrapWithSideEffects(gtNewIconNode(0), op1, GTF_ALL_EFFECT);
+                    tree = gtNewFalse();
+                    tree->SetMorphed(this);
+                    tree = gtWrapWithSideEffects(tree, op1, GTF_ALL_EFFECT);
                 }
                 tree->SetMorphed(this);
                 return tree;
@@ -14305,10 +14299,7 @@ GenTree* Compiler::fgInitThisClass()
 
 //------------------------------------------------------------------------
 // fgPreExpandQmarkChecks: Verify that the importer has created GT_QMARK nodes
-// in a way we can process them. The following
-//
-// Returns:
-//    Suitable phase status.
+// in a way we can process them.
 //
 // Remarks:
 //   The following is allowed:
@@ -14529,6 +14520,7 @@ bool Compiler::fgExpandQmarkStmt(BasicBlock* block, Statement* stmt)
     elseBlock->SetFlags(propagateFlagsToAll);
 
     BasicBlock* thenBlock = nullptr;
+
     if (hasTrueExpr && hasFalseExpr)
     {
         //                       bbj_always
@@ -14540,7 +14532,7 @@ bool Compiler::fgExpandQmarkStmt(BasicBlock* block, Statement* stmt)
         //              bbj_cond(true)
         //
         // TODO: Remove unnecessary condition reversal
-        gtReverseCond(condExpr);
+        qmark->gtOp1 = condExpr = gtReverseCond(condExpr);
 
         thenBlock = fgNewBBafter(BBJ_ALWAYS, condBlock, true);
         thenBlock->SetFlags(propagateFlagsToAll);
@@ -14573,7 +14565,7 @@ bool Compiler::fgExpandQmarkStmt(BasicBlock* block, Statement* stmt)
         //              bbj_cond(true)
         //
         // TODO: Remove unnecessary condition reversal
-        gtReverseCond(condExpr);
+        qmark->gtOp1 = condExpr = gtReverseCond(condExpr);
 
         const unsigned thenLikelihood = qmark->ThenNodeLikelihood();
         const unsigned elseLikelihood = qmark->ElseNodeLikelihood();

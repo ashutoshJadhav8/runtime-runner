@@ -353,8 +353,8 @@ class SsaDefArray
     unsigned m_arraySize;
     unsigned m_count;
 
-    static_assert_no_msg(SsaConfig::RESERVED_SSA_NUM == 0);
-    static_assert_no_msg(SsaConfig::FIRST_SSA_NUM == 1);
+    static_assert(SsaConfig::RESERVED_SSA_NUM == 0);
+    static_assert(SsaConfig::FIRST_SSA_NUM == 1);
 
     // Get the minimum valid SSA number.
     unsigned GetMinSsaNum() const
@@ -1930,7 +1930,7 @@ private:
 //   loop can reach every other block of the loop.
 //
 // * All loop blocks are dominated by the header block, i.e. the header block
-//   is guaranteed to be entered on every iteration. Note that in the prescence
+//   is guaranteed to be entered on every iteration. Note that in the presence
 //   of exceptional flow the header might not fully execute on every iteration.
 //
 // * From the above it follows that the loop can only be entered at the header
@@ -1996,11 +1996,12 @@ class FlowGraphNaturalLoop
 
     GenTreeLclVarCommon* FindDef(unsigned lclNum);
 
-    void MatchInit(NaturalLoopIterInfo* info, BasicBlock* initBlock, GenTree* init);
     bool MatchLimit(unsigned iterVar, GenTree* test, NaturalLoopIterInfo* info);
+    bool FindConstInit(BasicBlock* preheader, NaturalLoopIterInfo* info);
     bool CheckLoopConditionBaseCase(BasicBlock* initBlock, NaturalLoopIterInfo* info);
-    bool IsZeroTripTest(BasicBlock* initBlock, NaturalLoopIterInfo* info);
-    bool InitBlockEntersLoopOnTrue(BasicBlock* initBlock);
+    bool HasZeroTripTest(BasicBlock* preheader, NaturalLoopIterInfo* info);
+    bool IsZeroTripTest(BasicBlock* guardBlock, bool entersOnTrue, NaturalLoopIterInfo* info);
+
     template<typename T>
     static bool EvaluateRelop(T op1, T op2, genTreeOps oper);
 public:
@@ -2995,6 +2996,8 @@ public:
     GenTreeIntCon* gtNewTrue();
     GenTreeIntCon* gtNewFalse();
 
+    GenTreeILOffset* gtNewILOffsetNode(const DebugInfo& di DEBUGARG(IL_OFFSET lastOffset));
+
     GenTree* gtNewPhysRegNode(regNumber reg, var_types type);
 
     GenTree* gtNewJmpTableNode();
@@ -3645,6 +3648,7 @@ public:
     unsigned gtSetEvalOrderMinOpts(GenTree* tree);
     bool gtMayHaveStoreInterference(GenTree* treeWithStores, GenTree* tree);
     bool gtTreeHasLocalRead(GenTree* tree, unsigned lclNum);
+    bool gtTreeHasLocalStore(GenTree* tree, unsigned lclNum);
 
     void gtSetStmtInfo(Statement* stmt);
 
@@ -4599,6 +4603,10 @@ protected:
                             CORINFO_CALL_INFO* callInfo,
                             IL_OFFSET          rawILOffset);
 
+    void impSetupAndSpillForAsyncCall(GenTreeCall* call, OPCODE opcode, unsigned prefixFlags, const DebugInfo& callDI);
+
+    void impInsertAsyncContinuationForLdvirtftnCall(GenTreeCall* call);
+
     CORINFO_CLASS_HANDLE impGetSpecialIntrinsicExactReturnType(GenTreeCall* call);
 
     GenTree* impFixupCallStructReturn(GenTreeCall* call, CORINFO_CLASS_HANDLE retClsHnd);
@@ -4863,7 +4871,7 @@ public:
 
     bool impMatchIsInstBooleanConversion(const BYTE* codeAddr, const BYTE* codeEndp, int* consumed);
 
-    bool impMatchTaskAwaitPattern(const BYTE * codeAddr, const BYTE * codeEndp, int* configVal);
+    const BYTE* impMatchTaskAwaitPattern(const BYTE* codeAddr, const BYTE* codeEndp, int* configVal, IL_OFFSET* awaitOffset);
 
     GenTree* impCastClassOrIsInstToTree(
         GenTree* op1, GenTree* op2, CORINFO_RESOLVED_TOKEN* pResolvedToken, bool isCastClass, bool* booleanCheck, IL_OFFSET ilOffset);
@@ -6425,6 +6433,7 @@ protected:
 
     PhaseStatus fgPrepareToInstrumentMethod();
     PhaseStatus fgInstrumentMethod();
+    PhaseStatus fgInstrumentMethodCore();
     PhaseStatus fgIncorporateProfileData();
     bool        fgIncorporateBlockCounts();
     bool        fgIncorporateEdgeCounts();
@@ -6851,7 +6860,7 @@ private:
     // Clear up annotations for any struct promotion temps created for implicit byrefs.
     void fgMarkDemotedImplicitByRefArgs();
 
-    PhaseStatus fgMarkAddressExposedLocals();
+    PhaseStatus fgLocalMorph();
     bool fgExposeUnpropagatedLocals(bool propagatedAny, class LocalEqualsLocalAddrAssertions* assertions);
     void fgExposeLocalsInBitVec(BitVec_ValArg_T bitVec);
 
@@ -7059,8 +7068,7 @@ protected:
 
     bool optIsLoopTestEvalIntoTemp(Statement* testStmt, Statement** newTestStmt);
     unsigned optIsLoopIncrTree(GenTree* incr);
-    bool optExtractInitTestIncr(
-        BasicBlock** pInitBlock, BasicBlock* bottom, BasicBlock* top, GenTree** ppInit, GenTree** ppTest, GenTree** ppIncr);
+    bool optExtractTestIncr(BasicBlock* cond, GenTree** ppTest, GenTree** ppIncr);
 
     void optSetMappedBlockTargets(BasicBlock*      blk,
                           BasicBlock*      newBlk,
@@ -7655,14 +7663,26 @@ public:
 
     // Redundant branch opts
     //
-    PhaseStatus   optRedundantBranches();
-    bool          optRedundantRelop(BasicBlock* const block);
-    bool          optRedundantBranch(BasicBlock* const block);
-    bool          optJumpThreadDom(BasicBlock* const block, BasicBlock* const domBlock, bool domIsSameRelop);
-    bool          optJumpThreadPhi(BasicBlock* const block, GenTree* tree, ValueNum treeNormVN);
-    bool          optJumpThreadCheck(BasicBlock* const block, BasicBlock* const domBlock);
-    bool          optJumpThreadCore(JumpThreadInfo& jti);
-    bool          optReachable(BasicBlock* const fromBlock, BasicBlock* const toBlock, BasicBlock* const excludedBlock);
+    PhaseStatus optRedundantBranches();
+    bool        optRedundantRelop(BasicBlock* const block);
+    bool        optRedundantBranch(BasicBlock* const block);
+    bool        optJumpThreadDom(BasicBlock* const block, BasicBlock* const domBlock, bool domIsSameRelop);
+    bool        optJumpThreadPhi(BasicBlock* const block, GenTree* tree, ValueNum treeNormVN);
+    bool        optJumpThreadCheck(BasicBlock* const block, BasicBlock* const domBlock);
+    bool        optJumpThreadCore(JumpThreadInfo& jti);
+
+    enum class ReachabilityResult
+    {
+        BudgetExceeded,
+        Unreachable,
+        Reachable
+    };
+    ReachabilityResult optReachableWithBudget(BasicBlock* const fromBlock,
+                                              BasicBlock* const toBlock,
+                                              BasicBlock* const excludedBlock,
+                                              int*              pBudget);
+    bool optReachable(BasicBlock* const fromBlock, BasicBlock* const toBlock, BasicBlock* const excludedBlock);
+
     BitVecTraits* optReachableBitVecTraits;
     BitVec        optReachableBitVec;
     void          optRelopImpliesRelop(RelopImplicationInfo* rii);
@@ -7766,7 +7786,7 @@ public:
             {
                 // number of trailing zeros in GTF_ICON_HDL_MASK
                 const uint16_t iconMaskTzc = 24;
-                static_assert_no_msg((0xFF000000 == GTF_ICON_HDL_MASK) && (GTF_ICON_HDL_MASK >> iconMaskTzc) == 0xFF);
+                static_assert((0xFF000000 == GTF_ICON_HDL_MASK) && (GTF_ICON_HDL_MASK >> iconMaskTzc) == 0xFF);
 
                 GenTreeFlags flags = (GenTreeFlags)(m_encodedIconFlags << iconMaskTzc);
                 assert((flags & ~GTF_ICON_HDL_MASK) == 0);
@@ -8612,6 +8632,9 @@ public:
 
     jitstd::list<IPmappingDsc>  genIPmappings;
     jitstd::list<RichIPMapping> genRichIPmappings;
+
+    jitstd::vector<ICorDebugInfo::AsyncSuspensionPoint>*     compSuspensionPoints = nullptr;
+    jitstd::vector<ICorDebugInfo::AsyncContinuationVarInfo>* compAsyncVars        = nullptr;
 
     // Managed RetVal - A side hash table meant to record the mapping from a
     // GT_CALL node to its debug info.  This info is used to emit sequence points
@@ -9987,11 +10010,11 @@ public:
             // target from the register for the call (even in debug mode).
             // RBM_INT_CALLEE_TRASH is not known at compile time on TARGET_AMD64 since it's dependent on APX support.
 #if defined(TARGET_AMD64)
-            static_assert_no_msg(
-                (RBM_VALIDATE_INDIRECT_CALL_TRASH_ALL & regMaskTP(1 << REG_VALIDATE_INDIRECT_CALL_ADDR)) == RBM_NONE);
+            static_assert((RBM_VALIDATE_INDIRECT_CALL_TRASH_ALL & regMaskTP(1 << REG_VALIDATE_INDIRECT_CALL_ADDR)) ==
+                          RBM_NONE);
 #else
-            static_assert_no_msg((RBM_VALIDATE_INDIRECT_CALL_TRASH & regMaskTP(1 << REG_VALIDATE_INDIRECT_CALL_ADDR)) ==
-                                 RBM_NONE);
+            static_assert((RBM_VALIDATE_INDIRECT_CALL_TRASH & regMaskTP(1 << REG_VALIDATE_INDIRECT_CALL_ADDR)) ==
+                          RBM_NONE);
 #endif
             if (JitConfig.JitForceControlFlowGuard())
                 return true;
@@ -10891,10 +10914,10 @@ public:
     void compDoComponentUnitTestsOnce();
 #endif // DEBUG
 
-    int  compCompile(CORINFO_MODULE_HANDLE classPtr,
-                     void**                methodCodePtr,
-                     uint32_t*             methodCodeSize,
-                     JitFlags*             compileFlags);
+    int  compCompileAfterInit(CORINFO_MODULE_HANDLE classPtr,
+                              void**                methodCodePtr,
+                              uint32_t*             methodCodeSize,
+                              JitFlags*             compileFlags);
     void compCompileFinish();
     int  compCompileHelper(CORINFO_MODULE_HANDLE classPtr,
                            COMP_HANDLE           compHnd,
@@ -11253,7 +11276,7 @@ public:
 
 #define DEFAULT_MAX_INLINE_DEPTH 20 // Methods at more than this level deep will not be inlined
 
-#define DEFAULT_INLINE_BUDGET 20 // Maximum estimated compile time increase via inlining
+#define DEFAULT_INLINE_BUDGET 22 // Maximum estimated compile time increase via inlining
 
 #define DEFAULT_MAX_FORCE_INLINE_DEPTH 1 // Methods at more than this level deep will not be force inlined
 
@@ -11617,8 +11640,8 @@ protected:
     {
         assert(compiler != nullptr);
 
-        static_assert_no_msg(TVisitor::DoPreOrder || TVisitor::DoPostOrder);
-        static_assert_no_msg(!TVisitor::DoLclVarsOnly || TVisitor::DoPreOrder);
+        static_assert(TVisitor::DoPreOrder || TVisitor::DoPostOrder);
+        static_assert(!TVisitor::DoLclVarsOnly || TVisitor::DoPreOrder);
     }
 
     fgWalkResult PreOrderVisit(GenTree** use, GenTree* user)
@@ -11678,6 +11701,7 @@ public:
             // Leaf nodes
             case GT_CATCH_ARG:
             case GT_ASYNC_CONTINUATION:
+            case GT_ASYNC_RESUME_INFO:
             case GT_LABEL:
             case GT_FTN_ADDR:
             case GT_RET_EXPR:
@@ -11709,6 +11733,7 @@ public:
             case GT_PINVOKE_PROLOG:
             case GT_PINVOKE_EPILOG:
             case GT_IL_OFFSET:
+            case GT_RECORD_ASYNC_RESUME:
             case GT_NOP:
             case GT_SWIFT_ERROR:
             case GT_GCPOLL:

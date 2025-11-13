@@ -663,35 +663,35 @@ protected:
     private:
 // The assembly instruction
 #if defined(TARGET_XARCH)
-        static_assert_no_msg(INS_count <= 2048);
+        static_assert(INS_count <= 2048);
         instruction _idIns : 11;
 #define MAX_ENCODED_SIZE 15
 #elif defined(TARGET_ARM64)
 #define INSTR_ENCODED_SIZE 4
-        static_assert_no_msg(INS_count <= 2048);
+        static_assert(INS_count <= 2048);
         instruction _idIns : 11;
 #elif defined(TARGET_LOONGARCH64)
         // TODO-LoongArch64: not include SIMD-vector.
-        static_assert_no_msg(INS_count <= 512);
+        static_assert(INS_count <= 512);
         instruction _idIns : 9;
 #else
-        static_assert_no_msg(INS_count <= 256);
+        static_assert(INS_count <= 256);
         instruction _idIns : 8;
 #endif // !(defined(TARGET_XARCH) || defined(TARGET_ARM64) || defined(TARGET_LOONGARCH64))
 
 // The format for the instruction
 #if defined(TARGET_XARCH)
-        static_assert_no_msg(IF_COUNT <= 128);
+        static_assert(IF_COUNT <= 128);
         insFormat _idInsFmt : 7;
 #elif defined(TARGET_LOONGARCH64)
         unsigned _idCodeSize : 5; // the instruction(s) size of this instrDesc described.
 #elif defined(TARGET_RISCV64)
         unsigned _idCodeSize : 6; // the instruction(s) size of this instrDesc described.
 #elif defined(TARGET_ARM64)
-        static_assert_no_msg(IF_COUNT <= 1024);
+        static_assert(IF_COUNT <= 1024);
         insFormat _idInsFmt : 10;
 #else
-        static_assert_no_msg(IF_COUNT <= 256);
+        static_assert(IF_COUNT <= 256);
         insFormat _idInsFmt : 8;
 #endif
 
@@ -2370,8 +2370,8 @@ protected:
             : idDebugInfo(nullptr)
             , idStorage()
         {
-            static_assert_no_msg((offsetof(inlineInstrDesc<T>, idStorage) - sizeof(instrDescDebugInfo*)) ==
-                                 offsetof(inlineInstrDesc<T>, idDebugInfo));
+            static_assert((offsetof(inlineInstrDesc<T>, idStorage) - sizeof(instrDescDebugInfo*)) ==
+                          offsetof(inlineInstrDesc<T>, idDebugInfo));
         }
 
         T* id()
@@ -2636,9 +2636,9 @@ public:
 #endif // defined(TARGET_X86)
 #endif // !defined(HOST_64BIT)
 
-#if defined(TARGET_LOONGARCH64) || defined(TARGET_RISCV64)
+#if defined(TARGET_LOONGARCH64)
     unsigned int emitCounts_INS_OPTS_J;
-#endif // TARGET_LOONGARCH64 || TARGET_RISCV64
+#endif // TARGET_LOONGARCH64
 
     instrDesc* emitFirstInstrDesc(BYTE* idData) const;
     void       emitAdvanceInstrDesc(instrDesc** id, size_t idSize) const;
@@ -3304,6 +3304,9 @@ private:
 
     int emitSyncThisObjOffs; // what is the offset of "this" for synchronized methods?
 
+    CORINFO_METHOD_HANDLE emitAsyncResumeStub           = NO_METHOD_HANDLE;
+    void*                 emitAsyncResumeStubEntryPoint = nullptr;
+
 public:
     void emitSetFrameRangeGCRs(int offsLo, int offsHi);
     void emitSetFrameRangeLcls(int offsLo, int offsHi);
@@ -3465,6 +3468,17 @@ public:
     /*      The following logic keeps track of initialized data sections    */
     /************************************************************************/
 
+    // Note: Keep synchronized with AsyncHelpers.ResumeInfo
+    struct dataAsyncResumeInfo
+    {
+        // delegate*<Continuation, ref byte, Continuation>
+        target_size_t Resume;
+        // Pointer in main code for diagnostics. See comments on
+        // ICorDebugInfo::AsyncSuspensionPoint::DiagnosticNativeOffset and
+        // ResumeInfo.DiagnosticIP in SPC.
+        target_size_t DiagnosticIP;
+    };
+
     /* One of these is allocated for every blob of initialized data */
 
     struct dataSection
@@ -3479,7 +3493,8 @@ public:
         {
             data,
             blockAbsoluteAddr,
-            blockRelative32
+            blockRelative32,
+            asyncResumeInfo,
         };
 
         dataSection*   dsNext;
@@ -3487,8 +3502,9 @@ public:
         sectionType    dsType;
         var_types      dsDataType;
 
-        // variable-sized array used to store the constant data
-        // or BasicBlock* array in the block cases.
+        // variable-sized array used to store the constant data, BasicBlock*
+        // array in the block cases, or emitLocation for the asyncResumeInfo
+        // case.
         BYTE dsCont[0];
     };
 
@@ -3516,6 +3532,7 @@ public:
 
     void emitOutputDataSec(dataSecDsc* sec, BYTE* dst);
     void emitDispDataSec(dataSecDsc* section, BYTE* dst);
+    void emitAsyncResumeTable(unsigned numEntries, UNATIVE_OFFSET* dataOffset, dataSection** dataSection);
 
     /************************************************************************/
     /*              Handles to the current class and method.                */
@@ -3745,7 +3762,7 @@ public:
 
 inline void emitter::instrDesc::checkSizes()
 {
-    C_ASSERT(SMALL_IDSC_SIZE == offsetof(instrDesc, _idAddrUnion));
+    static_assert(SMALL_IDSC_SIZE == offsetof(instrDesc, _idAddrUnion));
 }
 
 /*****************************************************************************

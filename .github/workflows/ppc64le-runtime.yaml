@@ -34,10 +34,9 @@ jobs:
 
   ppc64le-sync:
     runs-on: ubuntu-latest
-
     steps:
       - name: configure
-        run: | 
+        run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 

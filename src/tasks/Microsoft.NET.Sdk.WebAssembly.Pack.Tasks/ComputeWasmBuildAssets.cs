@@ -41,15 +41,14 @@ public class ComputeWasmBuildAssets : Task
     public bool InvariantGlobalization { get; set; }
 
     [Required]
-    public bool HybridGlobalization { get; set; }
-
-    [Required]
     public bool LoadFullICUData { get; set; }
 
     [Required]
     public bool CopySymbols { get; set; }
 
     public bool EnableThreads { get; set; }
+
+    public bool EnableDiagnostics { get; set; }
 
     public bool EmitSourceMap { get; set; }
 
@@ -67,6 +66,7 @@ public class ComputeWasmBuildAssets : Task
     {
         var filesToRemove = new List<ITaskItem>();
         var assetCandidates = new List<ITaskItem>();
+        var uniqueFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
@@ -91,7 +91,7 @@ public class ComputeWasmBuildAssets : Task
             for (int i = 0; i < Candidates.Length; i++)
             {
                 var candidate = Candidates[i];
-                if (AssetsComputingHelper.ShouldFilterCandidate(candidate, TimeZoneSupport, InvariantGlobalization, HybridGlobalization, LoadFullICUData, CopySymbols, customIcuCandidateFilename, EnableThreads, EmitSourceMap, out var reason))
+                if (AssetsComputingHelper.ShouldFilterCandidate(candidate, TimeZoneSupport, InvariantGlobalization, LoadFullICUData, CopySymbols, customIcuCandidateFilename, EnableThreads, EnableDiagnostics, EmitSourceMap, out var reason))
                 {
                     Log.LogMessage(MessageImportance.Low, "Skipping asset '{0}' because '{1}'", candidate.ItemSpec, reason);
                     filesToRemove.Add(candidate);
@@ -150,6 +150,14 @@ public class ComputeWasmBuildAssets : Task
                     candidate.SetMetadata("RelatedAsset", relatedAssetPath);
 
                     Log.LogMessage(MessageImportance.Low, "Found satellite assembly '{0}' asset for inferred candidate '{1}' with culture '{2}'", candidate.ItemSpec, relatedAssetPath, culture);
+                }
+
+                // Check for unique file name before adding candidate
+                var candidateFileName = Path.GetFileName(candidate.ItemSpec);
+                if (!uniqueFileNames.Add(candidateFileName))
+                {
+                    Log.LogMessage(MessageImportance.Low, "Skipping duplicate file name '{0}' for candidate '{1}'", candidateFileName, candidate.ItemSpec);
+                    continue;
                 }
 
                 assetCandidates.Add(candidate);
@@ -235,7 +243,6 @@ public class ComputeWasmBuildAssets : Task
             case ".js" when filename.StartsWith("dotnet"):
             case ".mjs" when filename.StartsWith("dotnet"):
             case ".dat" when filename.StartsWith("icudt"):
-            case ".json" when filename.StartsWith("segmentation-rules"):
                 candidate.SetMetadata("AssetTraitName", "WasmResource");
                 candidate.SetMetadata("AssetTraitValue", "native");
                 break;

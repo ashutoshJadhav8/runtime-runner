@@ -72,7 +72,6 @@ namespace Wasm.Build.Tests
 
         [Theory, TestCategory("no-fingerprinting")]
         [MemberData(nameof(TestDataForAppBundleDir))]
-        [ActiveIssue("https://github.com/dotnet/runtime/issues/108107")]
         public async Task RunWithDifferentAppBundleLocations(bool runOutsideProjectDirectory, string extraProperties)
             => await BrowserRunTwiceWithAndThenWithoutBuildAsync(Configuration.Release, extraProperties, runOutsideProjectDirectory);
 
@@ -83,13 +82,25 @@ namespace Wasm.Build.Tests
             UpdateBrowserMainJs();
 
             string workingDir = runOutsideProjectDirectory ? BuildEnvironment.TmpPath : _projectDir;
+            string projectFilePath = info.ProjectFilePath;
+            if (runOutsideProjectDirectory)
+            {
+                // When running outside, the project is in a subdirectory of workingDir
+                string? directoryName = Path.GetDirectoryName(projectFilePath);
+                if (directoryName == null)
+                    throw new InvalidOperationException($"Invalid project file path: {projectFilePath}");
+
+                string projectDirName = Path.GetFileName(directoryName);
+                string projectFileName = Path.GetFileName(projectFilePath);
+                projectFilePath = Path.Combine(projectDirName, projectFileName);
+            }
 
             {
                 using var runCommand = new RunCommand(s_buildEnv, _testOutput)
                                             .WithWorkingDirectory(workingDir);
 
                 await using var runner = new BrowserRunner(_testOutput);
-                var page = await runner.RunAsync(runCommand, $"run --no-silent -c {config} --project \"{info.ProjectName}.csproj\" --forward-console");
+                var page = await runner.RunAsync(runCommand, $"run --no-silent -c {config} --project \"{projectFilePath}\" --forward-console");
                 await runner.WaitForExitMessageAsync(TimeSpan.FromMinutes(2));
                 Assert.Contains("Hello, Browser!", string.Join(Environment.NewLine, runner.OutputLines));
             }
@@ -99,7 +110,7 @@ namespace Wasm.Build.Tests
                                             .WithWorkingDirectory(workingDir);
 
                 await using var runner = new BrowserRunner(_testOutput);
-                var page = await runner.RunAsync(runCommand, $"run --no-silent -c {config} --no-build --project \"{info.ProjectName}.csproj\" --forward-console");
+                var page = await runner.RunAsync(runCommand, $"run --no-silent -c {config} --no-build --project \"{projectFilePath}\" --forward-console");
                 await runner.WaitForExitMessageAsync(TimeSpan.FromMinutes(2));
                 Assert.Contains("Hello, Browser!", string.Join(Environment.NewLine, runner.OutputLines));
             }
@@ -108,10 +119,13 @@ namespace Wasm.Build.Tests
         public static IEnumerable<object?[]> BrowserBuildAndRunTestData()
         {
             yield return new object?[] { "", BuildTestBase.DefaultTargetFramework, DefaultRuntimeAssetsRelativePath };
-            yield return new object?[] { "-f net9.0", "net9.0", DefaultRuntimeAssetsRelativePath };
+            yield return new object?[] { $"-f {DefaultTargetFramework}", DefaultTargetFramework, DefaultRuntimeAssetsRelativePath };
 
             if (EnvironmentVariables.WorkloadsTestPreviousVersions)
-                yield return new object?[] { "-f net8.0", "net8.0", DefaultRuntimeAssetsRelativePath };
+            {
+                yield return new object?[] { $"-f {PreviousTargetFramework}", PreviousTargetFramework, DefaultRuntimeAssetsRelativePath };
+                yield return new object?[] { $"-f {Previous2TargetFramework}", Previous2TargetFramework, DefaultRuntimeAssetsRelativePath };
+            }
 
             // ActiveIssue("https://github.com/dotnet/runtime/issues/90979")
             // yield return new object?[] { "", BuildTestBase.DefaultTargetFramework, "./" };
@@ -120,7 +134,7 @@ namespace Wasm.Build.Tests
 
         [Theory]
         [MemberData(nameof(BrowserBuildAndRunTestData))]
-        public async Task BrowserBuildAndRun(string extraNewArgs, string targetFramework, string runtimeAssetsRelativePath) 
+        public async Task BrowserBuildAndRun(string extraNewArgs, string targetFramework, string runtimeAssetsRelativePath)
         {
             Configuration config = Configuration.Debug;
             string extraProperties = runtimeAssetsRelativePath == DefaultRuntimeAssetsRelativePath ?
@@ -136,7 +150,7 @@ namespace Wasm.Build.Tests
                 addFrameworkArg: extraNewArgs.Length == 0
             );
 
-            if (targetFramework != "net8.0")
+            if (new Version(targetFramework.Replace("net", "")).Major > 8)
                 UpdateBrowserProgramFile();
             UpdateBrowserMainJs(targetFramework, runtimeAssetsRelativePath);
 
@@ -164,7 +178,7 @@ namespace Wasm.Build.Tests
                 Path.Combine(projectDirectory, "bin", info.ProjectName, config.ToString().ToLower(), "wwwroot", "_framework") :
                 GetBinFrameworkDir(config, isPublish);
 
-            string extraPropertiesForDBP = string.Empty;            
+            string extraPropertiesForDBP = string.Empty;
             if (useArtifacts)
             {
                 extraPropertiesForDBP += "<UseArtifactsOutput>true</UseArtifactsOutput><ArtifactsPath>.</ArtifactsPath>";
@@ -269,7 +283,7 @@ namespace Wasm.Build.Tests
             string extraProperties = $"<CopyOutputSymbolsToPublishDirectory>{shouldCopy}</CopyOutputSymbolsToPublishDirectory>";
             ProjectInfo info = CreateWasmTemplateProject(Template.WasmBrowser, config, aot: false, "publishpdb", extraProperties: extraProperties);
 
-            PublishProject(info, config);
+            PublishProject(info, config, new PublishOptions(ExtraMSBuildArgs: "-p:CompressionEnabled=true"));
             string publishPath = GetBinFrameworkDir(config, forPublish: true);
             AssertFile(".pdb");
             AssertFile(".pdb.gz");
@@ -279,6 +293,60 @@ namespace Wasm.Build.Tests
             {
                 var fileName = Directory.EnumerateFiles(publishPath, $"*{suffix}").FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).StartsWith(info.ProjectName));
                 Assert.True(copyOutputSymbolsToPublishDirectory == (fileName != null && File.Exists(fileName)), $"The {fileName} file {(copyOutputSymbolsToPublishDirectory ? "should" : "shouldn't")} exist in publish folder");
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task LibraryModeBuild(bool useWasmSdk)
+        {
+            var config = Configuration.Release;
+            ProjectInfo info = CopyTestAsset(config, aot: false, TestAsset.LibraryModeTestApp, "libraryMode");
+            if (!useWasmSdk)
+            {
+                UpdateFile($"{info.ProjectName}.csproj", new Dictionary<string, string>() {
+                    { "Microsoft.NET.Sdk.WebAssembly", "Microsoft.NET.Sdk" }
+                });
+            }
+            BuildProject(info, config, new BuildOptions(AssertAppBundle: useWasmSdk));
+            if (useWasmSdk)
+            {
+                var result = await RunForBuildWithDotnetRun(new BrowserRunOptions(config, ExpectedExitCode: 100));
+                Assert.Contains("WASM Library MyExport is called", result.TestOutput);
+            }
+            
+        }
+
+        [Theory]
+        [InlineData(Configuration.Debug, true)]
+        [InlineData(Configuration.Release, true)]
+        [InlineData(Configuration.Debug, false)]
+        [InlineData(Configuration.Release, false)]
+        public void TypeScriptDefinitionsCopiedToWwwrootOnBuild(Configuration config, bool emitTypeScriptDts)
+        {
+            string shouldEmit = emitTypeScriptDts ? "true" : "false";
+            string emitTypeScriptDtsProp = $"<WasmEmitTypeScriptDefinitions>{shouldEmit}</WasmEmitTypeScriptDefinitions>";
+            ProjectInfo info = CreateWasmTemplateProject(Template.WasmBrowser, config, aot: false, "tsdefs", extraProperties: emitTypeScriptDtsProp);
+
+            string projectDirectory = Path.GetDirectoryName(info.ProjectFilePath)!;
+            string dotnetDtsWwwrootPath = Path.Combine(projectDirectory, "wwwroot", "dotnet.d.ts");
+
+            // Verify dotnet.d.ts is not in wwwroot after creation
+            Assert.False(File.Exists(dotnetDtsWwwrootPath), $"dotnet.d.ts should not exist at {dotnetDtsWwwrootPath} after creation of the project");
+
+            // Build to trigger the _EnsureDotnetTypeScriptDefinitions target during the build phase
+            BuildProject(info, config, new BuildOptions());
+
+            // Verify dotnet.d.ts presence in the project's wwwroot directory after build
+            bool fileExists = File.Exists(dotnetDtsWwwrootPath);
+            if (emitTypeScriptDts)
+            {
+                Assert.True(fileExists, $"dotnet.d.ts should be created at {dotnetDtsWwwrootPath} after the build with WasmEmitTypeScriptDefinitions={shouldEmit}");
+            }
+            else
+            {
+                Assert.False(fileExists, $"dotnet.d.ts should not exist at {dotnetDtsWwwrootPath} after the build with WasmEmitTypeScriptDefinitions={shouldEmit}");
             }
         }
     }

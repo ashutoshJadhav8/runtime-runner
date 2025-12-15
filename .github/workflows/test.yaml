@@ -1,26 +1,49 @@
-name: Runtime-build-test
+name: Trigger build on GHA
 
 on:
-  push:
-    branches:
-      - try
+  issue_comment:
+    types: [created, edited]
+  # schedule:
+  #   - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  runtime-build-test:
-    runs-on: ashu-runner-self-hosted
+
+  ppc64le-sync:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout your fork
         uses: actions/checkout@v4
-      - name: Container
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Set Git identity
         run: |
-          docker stop github-api && docker rm github-api
-          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --network host --name github-api ubuntu:22.04
-      - name: Copy script
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config core.editor true
+      - name: Add upstream repo
         run: |
-          docker cp /root/ashutosh/api/runtime-runner/.github/workflows/runtime.sh github-api:/runtime.sh
-          docker exec github-api chmod +x /runtime.sh
-      - name: Build
+          git remote add upstream https://github.com/dotnet/runtime.git
+          git fetch upstream
+      - name: Merge upstream and push
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
-      - name: Test
+          git checkout main
+          git merge upstream/main --no-edit
+          # git merge upstream/main
+          # git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
+      
+      - name: Push changes
+        env:
+          PAT: ${{ secrets.PAT }}
         run: |
-          docker exec github-api bash -c "/runtime.sh --ref release/9.0 --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} main

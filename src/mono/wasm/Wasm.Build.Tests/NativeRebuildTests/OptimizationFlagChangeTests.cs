@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Wasm.Build.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -29,9 +30,9 @@ public class OptimizationFlagChangeTests : NativeRebuildTestsBase
     [Theory]
     [MemberData(nameof(FlagsOnlyChangeData), parameters: /*aot*/ false)]
     [MemberData(nameof(FlagsOnlyChangeData), parameters: /*aot*/ true)]
-    public async void OptimizationFlagChange(Configuration config, bool aot, string cflags, string ldflags)
+    public async Task OptimizationFlagChange(Configuration config, bool aot, string cflags, string ldflags)
     {
-        ProjectInfo info = CopyTestAsset(config, aot, TestAsset.WasmBasicTestApp, "rebuild_flags");        
+        ProjectInfo info = CopyTestAsset(config, aot, TestAsset.WasmBasicTestApp, "rebuild_flags");
         // force _WasmDevel=false, so we don't get -O0 but -O2
         string optElevationArg = "/p:_WasmDevel=false";
         BuildPaths paths = await FirstNativeBuildAndRun(info, config, aot, requestNativeRelink: true, invariant: false, extraBuildArgs: optElevationArg);

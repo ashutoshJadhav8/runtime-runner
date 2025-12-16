@@ -43,7 +43,7 @@ jobs:
         run: |
           git checkout main
           git merge upstream/main --no-edit
-          # gh repo sync alhad-deshpande/runtime --source dotnet/runtime --branch main
+          gh repo sync alhad-deshpande/runtime --source dotnet/runtime --branch main
           # git merge upstream/main
           # git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
       

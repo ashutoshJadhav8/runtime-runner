@@ -27,7 +27,7 @@ jobs:
 
       - name: Add upstream repository
         run: |
-          git remote add upstream hhttps://github.com/alhad-deshpande/runtime.git
+          git remote add upstream https://github.com/alhad-deshpande/runtime.git
           git fetch upstream
 
       - name: Merge upstream main into fork main

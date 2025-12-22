@@ -3,7 +3,7 @@ name: Sync with upstream repo
 on:
   schedule:
     # Every Saturday at 11:00 PM UTC
-    - cron: '* * * * *'
+    #- cron: '* * * * *'
   workflow_dispatch:
 
 permissions:

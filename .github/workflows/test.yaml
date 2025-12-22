@@ -10,32 +10,44 @@ permissions:
   contents: write   # 🔑 REQUIRED for pushing code
   actions: write 
 
+# jobs:
+#   sync:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout fork
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#           token: ${{ secrets.GITHUB_TOKEN }}
+
+#       - name: Configure git
+#         run: |
+#           git config --global user.name "GitHub Actions"
+#           git config --global user.email "actions@github.com"
+
+#       - name: Add upstream repository
+#         run: |
+#           git remote add upstream https://github.com/alhad-deshpande/runtime.git
+#           git fetch upstream
+
+#       - name: Rebase fork main onto upstream main
+#         run: |
+#           git checkout main
+#           git rebase upstream/main
+
+#       - name: Push rebased changes to fork
+#         run: |
+#           git push origin main --force
+
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout fork
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+      - uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Add upstream repository
-        run: |
-          git remote add upstream https://github.com/alhad-deshpande/runtime.git
-          git fetch upstream
-
-      - name: Rebase fork main onto upstream main
-        run: |
-          git checkout main
-          git rebase upstream/main
-
-      - name: Push rebased changes to fork
-        run: |
-          git push origin main --force
+          target_sync_branch: main
+          upstream_sync_repo: dotnet/runtime
+          upstream_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}

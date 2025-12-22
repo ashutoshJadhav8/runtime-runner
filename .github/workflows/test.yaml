@@ -79,4 +79,4 @@ jobs:
 
       - name: Push merged changes using PAT
         run: |
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/ashutoshJadhav8/runtime.git main
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/ashutoshJadhav8/runtime-runner.git main

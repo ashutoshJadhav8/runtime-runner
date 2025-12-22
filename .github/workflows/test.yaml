@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write   # 🔑 REQUIRED for pushing code
-  workflows: write 
+  actions: write 
 
 jobs:
   sync:

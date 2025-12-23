@@ -1,0 +1,182 @@
+name: Trigger ppc64le build on GHA
+
+on:
+  issue_comment:
+    types: [created, edited]
+  # schedule:
+  #   - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # sync:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: tgymnich/fork-sync@v2.0
+  #       with:
+  #         # token: ${{ secrets.PERSONAL_TOKEN }}
+  #         owner: alhad-deshpande
+  #         repo: runtime
+  #         head: master
+  #         base: master
+
+  # ppc64le-sync:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout your fork
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: true
+  #         fetch-depth: 0
+
+  #     - name: Set Git identity
+  #       run: |
+  #         git config --global user.name "GitHub Actions"
+  #         git config --global user.email "actions@github.com"
+  #         git config core.editor true
+
+  #     - name: Add upstream repo
+  #       run: |
+  #         git remote add upstream https://github.com/dotnet/runtime.git
+  #         git fetch upstream
+
+  #     - name: Merge upstream and push
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         git checkout main
+  #         git merge upstream/main --no-edit
+  #         gh repo sync alhad-deshpande/runtime --source dotnet/runtime --branch main
+          # git merge upstream/main
+          # git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
+      
+      # - name: Push changes
+      #   env:
+      #     PAT: ${{ secrets.PAT }}
+      #   run: |
+      #     git push https://x-access-token:${PAT}@github.com/${{ github.repository }} main
+
+  ppc64le-trigger:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@Dotnet-ppc64le build')
+    outputs:
+      command: ${{ steps.check_comment.outputs.command }}
+    steps:
+      - name: Parse comment
+        id: check_comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const comment = context.payload.comment.body || "";
+            let command = "";
+            if (comment.includes("@Dotnet-ppc64le build")) {
+              command = "build";
+            }
+            core.setOutput("command", command);
+
+  ppc64le-runtime-build-test:
+    needs: ppc64le-trigger
+    if: needs.ppc64le-trigger.outputs.command == 'build'
+    runs-on: ubuntu-24.04-ppc64le-p10
+    steps:
+      - name: Get PR SHA
+        id: get_pr
+        if: github.event.issue.pull_request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prUrl = context.payload.issue.pull_request.url;
+            const pr = await github.request(prUrl);
+            const sha = pr.data.base.sha;
+            core.setOutput("sha", sha);
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Container
+        run: |
+          docker stop github-api && docker rm github-api
+          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --network host --name github-api ubuntu:22.04
+      - name: Copy script
+        run: |
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+          docker exec github-api chmod +x /runtime.sh
+      - name: Build
+        run: |
+          docker exec github-api bash -c "/runtime.sh --build 2>&1 | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --test 2>&1 | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+      - name: Copy test result summary from container
+        run: |
+          rm -rf ./Script-details
+          docker cp github-api:/Script-details ./Script-details
+      - name: Upload Script-details artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Script-details
+          path: ./Script-details
+
+  ppc64le-result-status:
+    needs: [ppc64le-trigger, ppc64le-runtime-build-test]
+    if: >
+      always() &&
+      needs.ppc64le-trigger.outputs.command == 'build'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set failure flag
+        id: check-status
+        run: echo "status=${{ needs.ppc64le-runtime-build-test.result }}" >> $GITHUB_OUTPUT
+      - name: Download Script-details artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Script-details
+          path: .
+        continue-on-error: true
+      - name: Check if Script-details file exists
+        id: script-check
+        run: |
+          if [[ -f "Script-details" ]]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Comment test summary on PR
+        if: github.event.issue.pull_request && steps.script-check.outputs.found == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('Script-details', 'utf8');
+            const issue_number = context.issue.number;
+            await github.rest.issues.createComment({
+              issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+      - name: Comment failure message on PR
+        if: steps.check-status.outputs.status != 'success' || steps.script-check.outputs.found == 'false'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+          script: |
+            const runId = process.env.GITHUB_RUN_ID;
+            const repo = process.env.GITHUB_REPOSITORY;
+            const jobUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+            const issue_number = context.issue.number;
+            const body = `The ppc64le runtime build and test job has failed. Below is the link.\n${jobUrl}`;
+            await github.rest.issues.createComment({
+              issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

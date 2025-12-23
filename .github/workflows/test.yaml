@@ -1,14 +1,95 @@
-name: Sync with upstream repo
+name: Sync Fork With Upstream
 
 on:
   schedule:
-    # Every Saturday at 11:00 PM UTC
-    #- cron: '* * * * *'
-  workflow_dispatch:
+    - cron: "0 * * * *"  # run every hour (change as needed)
+  workflow_dispatch:     # allow manual trigger
 
 permissions:
-  contents: write   # 🔑 REQUIRED for pushing code
-  actions: write 
+  contents: write        # allow push commits
+  pull-requests: write   # allow PR creation (optional)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # fetch full history
+          persist-credentials: false
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/dotnet/runtime.git
+          git fetch upstream
+
+      - name: Merge upstream
+        run: |
+          git checkout main
+          git merge upstream/main --ff-only
+
+      - name: Commit & push
+        env:
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: actions@github.com
+        run: |
+          git push "https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git" main
+
+# name: Sync with upstream repo
+
+# on:
+#   schedule:
+#     # Every Saturday at 11:00 PM UTC
+#     #- cron: '* * * * *'
+#   workflow_dispatch:
+
+# permissions:
+#   contents: write   # 🔑 REQUIRED for pushing code
+#   actions: write 
+
+# # jobs:
+# #   sync:
+# #     runs-on: ubuntu-latest
+
+# #     steps:
+# #       - name: Checkout fork
+# #         uses: actions/checkout@v4
+# #         with:
+# #           fetch-depth: 0
+# #           token: ${{ secrets.GITHUB_TOKEN }}
+
+# #       - name: Configure git
+# #         run: |
+# #           git config --global user.name "GitHub Actions"
+# #           git config --global user.email "actions@github.com"
+
+# #       - name: Add upstream repository
+# #         run: |
+# #           git remote add upstream https://github.com/alhad-deshpande/runtime.git
+# #           git fetch upstream
+
+# #       - name: Rebase fork main onto upstream main
+# #         run: |
+# #           git checkout main
+# #           git rebase upstream/main
+
+# #       - name: Push rebased changes to fork
+# #         run: |
+# #           git push origin main --force
+
+# # jobs:
+# #   sync:
+# #     runs-on: ubuntu-latest
+# #     steps:
+# #       - uses: actions/checkout@v3
+# #       - uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+# #         with:
+# #           target_sync_branch: main
+# #           upstream_sync_repo: dotnet/runtime
+# #           upstream_sync_branch: main
+# #           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
 
 # jobs:
 #   sync:
@@ -19,64 +100,22 @@ permissions:
 #         uses: actions/checkout@v4
 #         with:
 #           fetch-depth: 0
-#           token: ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: Configure git
+#       - name: Configure Git
 #         run: |
-#           git config --global user.name "GitHub Actions"
-#           git config --global user.email "actions@github.com"
+#           git config user.name "github-actions[bot]"
+#           git config user.email "github-actions[bot]@users.noreply.github.com"
 
 #       - name: Add upstream repository
 #         run: |
 #           git remote add upstream https://github.com/alhad-deshpande/runtime.git
 #           git fetch upstream
 
-#       - name: Rebase fork main onto upstream main
+#       - name: Merge upstream into fork main
 #         run: |
 #           git checkout main
-#           git rebase upstream/main
+#           git merge upstream/main --no-edit
 
-#       - name: Push rebased changes to fork
+#       - name: Push merged changes using PAT
 #         run: |
-#           git push origin main --force
-
-# jobs:
-#   sync:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v3
-#       - uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
-#         with:
-#           target_sync_branch: main
-#           upstream_sync_repo: dotnet/runtime
-#           upstream_sync_branch: main
-#           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout fork
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Add upstream repository
-        run: |
-          git remote add upstream https://github.com/alhad-deshpande/runtime.git
-          git fetch upstream
-
-      - name: Merge upstream into fork main
-        run: |
-          git checkout main
-          git merge upstream/main --no-edit
-
-      - name: Push merged changes using PAT
-        run: |
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/ashutoshJadhav8/runtime-runner.git main
+#           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/ashutoshJadhav8/runtime-runner.git main

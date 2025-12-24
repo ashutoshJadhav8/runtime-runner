@@ -1,8 +1,8 @@
 name: Sync Fork from Upstream (Safe Merge)
 
 on:
-  schedule:
-    - cron: '* * * * *'   # Every Monday
+  # schedule:
+  #   - cron: '* * * * *'   # Every Monday
   workflow_dispatch:
 
 permissions:

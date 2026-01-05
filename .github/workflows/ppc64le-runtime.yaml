@@ -65,24 +65,18 @@ jobs:
           TRIGGER_DATE=$(date -u +"%Y-%m-%d")
           START_TIME=${{ needs.ppc64le-runtime-build-test.started_at }}
           END_TIME=${{ needs.ppc64le-runtime-build-test.completed_at }}
-  
-          # Workflow statuses
           BUILD_STATUS=${{ needs.ppc64le-runtime-build-test.result }}
-          
-          # Test status based on step result
           TEST_STEP_STATUS="unknown"
           if [[ "${{ needs.ppc64le-runtime-build-test.result }}" == "success" ]]; then
             TEST_STEP_STATUS="success"
           else
             TEST_STEP_STATUS="failure"
           fi
-  
-          # Create message
           MESSAGE="Trigger Date: $TRIGGER_DATE
           Start Time: $START_TIME
           End Time: $END_TIME
           Build Status: $BUILD_STATUS
-          Test Status: $TEST_STEP_STATUS"
+          Test Status: $TEST_STEP_STATUS
           echo "$MESSAGE" > workflow_status.txt
           echo "workflow_message=$MESSAGE" >> $GITHUB_OUTPUT
   

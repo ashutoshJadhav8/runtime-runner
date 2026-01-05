@@ -76,7 +76,7 @@ jobs:
           Start Time: $START_TIME
           End Time: $END_TIME
           Build Status: $BUILD_STATUS
-          Test Status: $TEST_STEP_STATUS
+          Test Status: $TEST_STEP_STATUS"
           echo "$MESSAGE" > workflow_status.txt
           echo "workflow_message=$MESSAGE" >> $GITHUB_OUTPUT
   

@@ -158,17 +158,17 @@ jobs:
           git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
           git push
   
-      - name: Comment workflow status on PR
-        if: github.event.issue.pull_request
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('workflow_status.txt', 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
+      # - name: Comment workflow status on PR
+      #   if: github.event.issue.pull_request
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+      #     script: |
+      #       const fs = require('fs');
+      #       const body = fs.readFileSync('workflow_status.txt', 'utf8');
+      #       await github.rest.issues.createComment({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         issue_number: context.issue.number,
+      #         body
+      #       });

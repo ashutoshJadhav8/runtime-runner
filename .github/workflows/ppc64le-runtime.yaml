@@ -19,6 +19,9 @@ jobs:
     steps:
       - name: just run
         run: echo "ashu"
+      - name: Capture workflow start time
+        run: |
+          echo "WORKFLOW_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
   
   ppc64le-sync:
     runs-on: ubuntu-latest

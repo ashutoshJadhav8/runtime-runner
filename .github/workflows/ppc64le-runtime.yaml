@@ -130,12 +130,14 @@ jobs:
           END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
           TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          LINE="------------------------------------------------------------------"
           cat <<EOF > workflow_status.txt
           Trigger Date: ${TRIGGER_DATE}
           Start Time: ${START_TIME}
           End Time: ${END_TIME}
           Build Status: ${BUILD_STATUS}
           Test Status: ${TEST_STATUS}
+          $(LINE)
           EOF
           cat workflow_status.txt
 

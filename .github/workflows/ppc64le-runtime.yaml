@@ -148,8 +148,6 @@ jobs:
           git add workflow_status.txt
           git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
   
       - name: Comment workflow status on PR
         if: github.event.issue.pull_request

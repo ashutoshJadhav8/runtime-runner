@@ -118,6 +118,11 @@ jobs:
     needs: [ppc64le-sync, ppc64le-runtime-build-test]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
       - name: Set workflow status summary
         run: |
           TRIGGER_DATE=$(date -u +"%Y-%m-%d")

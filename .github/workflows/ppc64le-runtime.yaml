@@ -54,33 +54,80 @@ jobs:
           git merge upstream/main --no-edit || true
           git push origin main
 
+  # ppc64le-result-status:
+  #   needs: [ppc64le-sync, ppc64le-runtime-build-test]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Set timestamps and workflow status
+  #       id: status
+  #       run: |
+  #         # Date and time
+  #         TRIGGER_DATE=$(date -u +"%Y-%m-%d")
+  #         START_TIME=${{ needs.ppc64le-runtime-build-test.started_at }}
+  #         END_TIME=${{ needs.ppc64le-runtime-build-test.completed_at }}
+  #         BUILD_STATUS=${{ needs.ppc64le-runtime-build-test.result }}
+  #         TEST_STEP_STATUS="unknown"
+  #         if [[ "${{ needs.ppc64le-runtime-build-test.result }}" == "success" ]]; then
+  #           TEST_STEP_STATUS="success"
+  #         else
+  #           TEST_STEP_STATUS="failure"
+  #         fi
+  #         MESSAGE="Trigger Date: $TRIGGER_DATE\nStart Time: $START_TIME\nEnd Time: $END_TIME\nBuild Status: $BUILD_STATUS\nTest Status: $TEST_STEP_STATUS"
+  #         echo "$MESSAGE" > workflow_status.txt
+  #         echo "workflow_message=$MESSAGE" >> $GITHUB_OUTPUT
+  
+  #     - name: Upload workflow_status.txt artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: workflow_status
+  #         path: workflow_status.txt
+  
+  #     - name: Comment workflow status on PR
+  #       if: github.event.issue.pull_request
+  #       uses: actions/github-script@v6
+  #       with:
+  #         github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+  #         script: |
+  #           const fs = require('fs');
+  #           const body = fs.readFileSync('workflow_status.txt', 'utf8');
+  #           const issue_number = context.issue.number;
+  #           await github.rest.issues.createComment({
+  #             issue_number,
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             body
+  #           });
+
+
   ppc64le-result-status:
     needs: [ppc64le-sync, ppc64le-runtime-build-test]
     runs-on: ubuntu-latest
     steps:
-      - name: Set timestamps and workflow status
-        id: status
+      - name: Set workflow status summary
         run: |
-          # Date and time
           TRIGGER_DATE=$(date -u +"%Y-%m-%d")
-          START_TIME=${{ needs.ppc64le-runtime-build-test.started_at }}
-          END_TIME=${{ needs.ppc64le-runtime-build-test.completed_at }}
-          BUILD_STATUS=${{ needs.ppc64le-runtime-build-test.result }}
-          TEST_STEP_STATUS="unknown"
-          if [[ "${{ needs.ppc64le-runtime-build-test.result }}" == "success" ]]; then
-            TEST_STEP_STATUS="success"
-          else
-            TEST_STEP_STATUS="failure"
-          fi
-          MESSAGE="Trigger Date: $TRIGGER_DATE\nStart Time: $START_TIME\nEnd Time: $END_TIME\nBuild Status: $BUILD_STATUS\nTest Status: $TEST_STEP_STATUS"
-          echo "$MESSAGE" > workflow_status.txt
-          echo "workflow_message=$MESSAGE" >> $GITHUB_OUTPUT
+          START_TIME="${WORKFLOW_START_TIME}"
+          END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          cat <<EOF > workflow_status.txt
+          Trigger Date: ${TRIGGER_DATE}
+          Start Time: ${START_TIME}
+          End Time: ${END_TIME}
+          Build Status: ${BUILD_STATUS}
+          Test Status: ${TEST_STATUS}
+          EOF
+          cat workflow_status.txt
   
-      - name: Upload workflow_status.txt artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: workflow_status
-          path: workflow_status.txt
+      - name: Commit workflow_status.txt to repo
+        run: |
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
+          git add workflow_status.txt
+          git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
   
       - name: Comment workflow status on PR
         if: github.event.issue.pull_request
@@ -90,10 +137,9 @@ jobs:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('workflow_status.txt', 'utf8');
-            const issue_number = context.issue.number;
             await github.rest.issues.createComment({
-              issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
+              issue_number: context.issue.number,
               body
             });

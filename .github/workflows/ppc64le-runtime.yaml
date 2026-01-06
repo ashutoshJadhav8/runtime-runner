@@ -14,14 +14,26 @@ concurrency:
 
 jobs:
   
+  # ppc64le-runtime-build-test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: just run
+  #       run: echo "ashu"
+  #     - name: Capture workflow start time
+  #       run: |
+  #         echo "WORKFLOW_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+
   ppc64le-runtime-build-test:
     runs-on: ubuntu-latest
+    outputs:
+      workflow_start_time: ${{ steps.capture-start.outputs.start_time }}
     steps:
       - name: just run
         run: echo "ashu"
       - name: Capture workflow start time
+        id: capture-start
         run: |
-          echo "WORKFLOW_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+          echo "start_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
   
   ppc64le-sync:
     runs-on: ubuntu-latest
@@ -109,7 +121,7 @@ jobs:
       - name: Set workflow status summary
         run: |
           TRIGGER_DATE=$(date -u +"%Y-%m-%d")
-          START_TIME="${WORKFLOW_START_TIME}"
+          START_TIME="${{ needs.ppc64le-runtime-build-test.outputs.workflow_start_time }}"
           END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
           TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
@@ -121,6 +133,13 @@ jobs:
           Test Status: ${TEST_STATUS}
           EOF
           cat workflow_status.txt
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
   
       - name: Commit workflow_status.txt to repo
         run: |

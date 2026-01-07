@@ -165,6 +165,10 @@ jobs:
     #   needs.ppc64le-trigger.outputs.command == 'build'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set failure flag
         id: check-status
         run: echo "status=${{ needs.ppc64le-runtime-build-test.result }}" >> $GITHUB_OUTPUT

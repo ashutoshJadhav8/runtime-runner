@@ -189,20 +189,20 @@ jobs:
       
       - name: Set workflow status summary
         run: |
-          # TRIGGER_DATE=$(date -u +"%Y-%m-%d")
-          # START_TIME="${{ needs.ppc64le-runtime-build-test.outputs.workflow_start_time }}"
-          # END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          # BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
-          # TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
-          # cat <<EOF >> workflow_status.txt
-          # Trigger Date: ${TRIGGER_DATE}
-          # Start Time: ${START_TIME}
-          # End Time: ${END_TIME}
-          # Build Status: ${BUILD_STATUS}
-          # Test Status: ${TEST_STATUS}
+          TRIGGER_DATE=$(date -u +"%Y-%m-%d")
+          START_TIME="${{ needs.ppc64le-runtime-build-test.outputs.workflow_start_time }}"
+          END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          cat <<EOF >> workflow_status
+          Trigger Date: ${TRIGGER_DATE}
+          Start Time: ${START_TIME}
+          End Time: ${END_TIME}
+          Build Status: ${BUILD_STATUS}
+          Test Status: ${TEST_STATUS}
+          EOF
           cat Script-details >> workflow_status
           echo "------------------------------------------------------------------" >> workflow_status
-          # EOF
           cat workflow_status
       
       - name: Generate GitHub App token
@@ -212,7 +212,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
   
-      - name: Commit workflow_status.txt to repo
+      - name: Commit workflow_status to repo
         run: |
           pwd
           ls -la

@@ -3,7 +3,7 @@
   # Runtime build script for ubuntu:22.04, only for CI job
 
   set -uxo pipefail
-  apt update && apt upgrade -y && apt-get install apt-utils sudo software-properties-common -y
+  # apt update && apt upgrade -y && apt-get install apt-utils sudo software-properties-common -y
 
   REPO=https://github.com/alhad-deshpande/runtime.git
   REF=main
@@ -73,12 +73,12 @@
     apt-get update && sudo apt-get upgrade -y
   fi
 
-  apt-get update && DEBIAN_FRONTEND="noninteractive" TZ="Asia/Kolkata" apt-get install -y tzdata
+  # apt-get update && DEBIAN_FRONTEND="noninteractive" TZ="Asia/Kolkata" apt-get install -y tzdata
 
-  apt-get -y install bc automake clang cmake findutils git \
-                  hostname libtool libkrb5-dev \
-                  llvm make python3  liblttng-ust-dev \
-                  tar wget jq lld build-essential zlib1g-dev libssl-dev libbrotli-dev
+  # apt-get -y install bc automake clang cmake findutils git \
+  #                 hostname libtool libkrb5-dev \
+  #                 llvm make python3  liblttng-ust-dev \
+  #                 tar wget jq lld build-essential zlib1g-dev libssl-dev libbrotli-dev
 
   runtime-build()
   {

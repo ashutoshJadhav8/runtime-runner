@@ -223,6 +223,54 @@ jobs:
           git add workflow_status
           git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
           git push
+      
+      - name: Update HTML build report (from workflow_status)
+        run: |
+          REPORT_FILE="build-report.html"
+      
+          if [ ! -f "$REPORT_FILE" ]; then
+            echo "ERROR: build-report.html not found"
+            exit 1
+          fi
+          DATE=$(grep "Trigger Date" workflow_status | cut -d: -f2- | xargs)
+          START_TIME=$(grep "Start Time" workflow_status | cut -d: -f2- | xargs)
+          END_TIME=$(grep "End Time" workflow_status | cut -d: -f2- | xargs)
+          BUILD_STATUS=$(grep "Build Status" workflow_status | cut -d: -f2- | xargs)
+          TEST_STATUS=$(grep "Test Status" workflow_status | cut -d: -f2- | xargs)
+          if [[ "$BUILD_STATUS" == "success" && "$TEST_STATUS" == "success" ]]; then
+            ROW_CLASS="success"
+            STATUS_MSG="Runtime build is successful, test result"
+          else
+            ROW_CLASS="failure"
+            STATUS_MSG="Runtime build or test failed"
+          fi      
+          TOTAL=$(grep "Total Test Cases" workflow_status | awk -F: '{print $2}' | xargs)
+          PASSED=$(grep "Test Passed" workflow_status | awk '{print $4}')
+          PASS_AVG=$(grep "Test Passed" workflow_status | awk -F'[()]' '{print $2}')
+          FAILED=$(grep "Test Failed" workflow_status | awk '{print $4}')
+          FAIL_AVG=$(grep "Test Failed" workflow_status | awk -F'[()]' '{print $2}')
+          SKIPPED=$(grep "Test Skipped" workflow_status | awk '{print $4}')
+          SKIP_AVG=$(grep "Test Skipped" workflow_status | awk -F'[()]' '{print $2}')
+          ROW=$(cat <<EOF
+          <tr class="$ROW_CLASS">
+          <td>$DATE</td>
+          <td>$START_TIME</td>
+          <td>$END_TIME</td>
+          <td>
+          $STATUS_MSG
+          <hr>
+          <div class="status-grid">
+            <div class="label">Total Test Cases :</div><div>$TOTAL</div>
+            <div class="label">Test Passed :</div><div>$PASSED ($PASS_AVG)</div>
+            <div class="label">Test Failed :</div><div>$FAILED ($FAIL_AVG)</div>
+            <div class="label">Test Skipped :</div><div>$SKIPPED ($SKIP_AVG)</div>
+          </div>
+          </td>
+          </tr>
+          EOF
+          )
+          sed -i "/<\/tbody>/i $ROW" "$REPORT_FILE"
+
     
       # - name: Comment test summary on PR
       #   if: github.event.issue.pull_request && steps.script-check.outputs.found == 'true'

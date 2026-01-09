@@ -212,6 +212,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Update HTML build report (from workflow_status)
         run: |
           REPORT_FILE="build-report.html"
@@ -258,9 +259,6 @@ jobs:
           EOF
           )
           sed -i "/<\/tbody>/i $ROW" "$REPORT_FILE"
-  
-      - name: Commit workflow_status to repo
-        run: |
           pwd
           ls -la
           ls -la ../

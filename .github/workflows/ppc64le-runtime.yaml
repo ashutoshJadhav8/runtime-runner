@@ -212,18 +212,6 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-  
-      - name: Commit workflow_status to repo
-        run: |
-          pwd
-          ls -la
-          ls -la ../
-          git config user.name "github-app[bot]"
-          git config user.email "github-app[bot]@users.noreply.github.com"
-          git add workflow_status
-          git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
-          git push
-      
       - name: Update HTML build report (from workflow_status)
         run: |
           REPORT_FILE="build-report.html"
@@ -270,7 +258,17 @@ jobs:
           EOF
           )
           sed -i "/<\/tbody>/i $ROW" "$REPORT_FILE"
-
+  
+      - name: Commit workflow_status to repo
+        run: |
+          pwd
+          ls -la
+          ls -la ../
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
+          git add workflow_status
+          git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
+          git push
     
       # - name: Comment test summary on PR
       #   if: github.event.issue.pull_request && steps.script-check.outputs.found == 'true'

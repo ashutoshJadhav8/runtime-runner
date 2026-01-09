@@ -191,7 +191,7 @@ jobs:
       - name: Set workflow status summary
         run: |
           TRIGGER_DATE=$(TZ=Asia/Kolkata date -u +"%Y-%m-%d")
-          START_TIME="${{ steps.capture-start.outputs.start_time }}"
+          START_TIME="${{ needs.ppc64le-sync.outputs.workflow_start_time }}"
           END_TIME=$(TZ=Asia/Kolkata date +"%H:%M:%S")
           BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
           TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"

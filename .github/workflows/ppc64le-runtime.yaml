@@ -265,9 +265,18 @@ jobs:
 
           if [[ "$TOTAL_TESTS" -gt 0 ]]; then
             PASS_PERCENT=$(awk "BEGIN { printf \"%.2f\", ($PASSED_TESTS/$TOTAL_TESTS)*100 }")
+            FAIL_PERCENT=$(awk "BEGIN { printf \"%.2f\", ($FAILED_TESTS/$TOTAL_TESTS)*100 }")
+            SKIPPED_PERCENT=$(awk "BEGIN { printf \"%.2f\", ($SKIPPED_TESTS/$TOTAL_TESTS)*100 }")
           else
             PASS_PERCENT="0.00"
+            FAIL_PERCENT="0.00"
+            SKIPPED_PERCENT="0.00"
           fi
+          
+          # Add parentheses around percentages for display
+          PASS_PERCENT="($PASS_PERCENT%)"
+          FAIL_PERCENT="($FAIL_PERCENT%)"
+          SKIPPED_PERCENT="($SKIPPED_PERCENT%)"
 
           ROW_CLASS="success"
           STATUS_TEXT="Runtime build and tests successful"
@@ -290,9 +299,9 @@ jobs:
               <hr>
               <div class="status-grid">
                 <div class="label">Total Test Cases :</div><div>TOTAL_TESTS</div>
-                <div class="label">Test Passed :</div><div>PASSED_TESTS (PASS_PERCENT%)</div>
-                <div class="label">Test Failed :</div><div>FAILED_TESTS (FAIL_PERCENT%)</div>
-                <div class="label">Test Skipped :</div><div>SKIPPED_TESTS (SKIPPED_PERCENT%)</div>
+                <div class="label">Test Passed :</div><div>PASSED_TESTS PASS_PERCENT</div>
+                <div class="label">Test Failed :</div><div>FAILED_TESTS FAIL_PERCENT</div>
+                <div class="label">Test Skipped :</div><div>SKIPPED_TESTS SKIPPED_PERCENT</div>
               </div>
             </td>
           </tr>

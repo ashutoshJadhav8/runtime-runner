@@ -246,10 +246,10 @@ jobs:
           # Parse Script-details (Example B)
           # -----------------------------
           if [[ -f "$SCRIPT_FILE" ]]; then
-            TOTAL_TESTS=$(grep -oE 'Total:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+')
-            PASSED_TESTS=$(grep -oE 'Passed:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+')
-            FAILED_TESTS=$(grep -oE 'Failed:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+')
-            SKIPPED_TESTS=$(grep -oE 'Skipped:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+')
+          TOTAL_TESTS=$(grep -oE 'Total:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+' || true)
+          PASSED_TESTS=$(grep -oE 'Passed:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+' || true)
+          FAILED_TESTS=$(grep -oE 'Failed:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+' || true)
+          SKIPPED_TESTS=$(grep -oE 'Skipped:[[:space:]]*[0-9]+' "$SCRIPT_FILE" | grep -oE '[0-9]+' || true)
           else
             echo "Script-details not found"
             TOTAL_TESTS=0

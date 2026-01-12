@@ -314,7 +314,11 @@ jobs:
           # -----------------------------
           # Create report.html if missing
           # -----------------------------
-          if [[ ! -f report.html ]]; then
+          if [[ ! -s report.html ]] || ! grep -q "</tbody>" report.html; then
+          # -----------------------------
+          # Create report.html if missing or invalid
+          # -----------------------------
+          if [[ ! -s report.html ]] || ! grep -q "</tbody>" report.html; then
             cat > report.html <<'HTML'
           <!DOCTYPE html>
           <html lang="en">
@@ -358,13 +362,7 @@ jobs:
           </html>
           HTML
           fi
-
-          # -----------------------------
-          # Append row
-          # -----------------------------
-          sed -i "/<\/tbody>/r row.html" report.html
-
-        
+          
       - name: Commit workflow_status to repo
         run: |
           git config user.name "github-app[bot]"

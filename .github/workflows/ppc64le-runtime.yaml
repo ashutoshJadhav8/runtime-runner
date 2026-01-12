@@ -215,10 +215,10 @@ jobs:
 
       - name: Update HTML build report (from workflow_status)
         run: |
-          REPORT_FILE="build-report.html"
+          REPORT_FILE="workflow_status"
       
           if [ ! -f "$REPORT_FILE" ]; then
-            echo "ERROR: build-report.html not found"
+            echo "ERROR: workflow_status not found"
             exit 1
           fi
           DATE=$(grep "Trigger Date" workflow_status | cut -d: -f2- | xargs)

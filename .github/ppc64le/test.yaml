@@ -1,0 +1,403 @@
+name: Trigger ppc64le build on GHA on my repo
+
+on:
+  issue_comment:
+    types: [created, edited]
+  # schedule:
+  #   - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ppc64le-sync:
+    runs-on: ubuntu-latest
+    outputs:
+      workflow_start_time: ${{ steps.capture-start.outputs.start_time }}
+
+    steps:
+      - name: Capture workflow start time
+        id: capture-start
+        run: |
+          echo "start_time=$(TZ=Asia/Kolkata date +"%H:%M:%S")" >> $GITHUB_OUTPUT
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/alhad-deshpande/runtime.git || true
+          git fetch upstream
+      - name: Sync main safely
+        run: |
+          git checkout main
+          git pull origin main
+          git merge upstream/main --no-edit || true
+          git push origin main
+  # sync:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: tgymnich/fork-sync@v2.0
+  #       with:
+  #         # token: ${{ secrets.PERSONAL_TOKEN }}
+  #         owner: alhad-deshpande
+  #         repo: runtime
+  #         head: master
+  #         base: master
+
+  # ppc64le-sync:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout your fork
+  #       uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: true
+  #         fetch-depth: 0
+
+  #     - name: Set Git identity
+  #       run: |
+  #         git config --global user.name "GitHub Actions"
+  #         git config --global user.email "actions@github.com"
+  #         git config core.editor true
+
+  #     - name: Add upstream repo
+  #       run: |
+  #         git remote add upstream https://github.com/dotnet/runtime.git
+  #         git fetch upstream
+
+  #     - name: Merge upstream and push
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         git checkout main
+  #         git merge upstream/main --no-edit
+  #         gh repo sync alhad-deshpande/runtime --source dotnet/runtime --branch main
+          # git merge upstream/main
+          # git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} main
+      
+      # - name: Push changes
+      #   env:
+      #     PAT: ${{ secrets.PAT }}
+      #   run: |
+      #     git push https://x-access-token:${PAT}@github.com/${{ github.repository }} main
+
+  # ppc64le-trigger:
+  #   runs-on: ubuntu-latest
+  #   if: contains(github.event.comment.body, '@Dotnet-ppc64le build')
+  #   outputs:
+  #     command: ${{ steps.check_comment.outputs.command }}
+  #   steps:
+  #     - name: Parse comment
+  #       id: check_comment
+  #       uses: actions/github-script@v6
+  #       with:
+  #         script: |
+  #           const comment = context.payload.comment.body || "";
+  #           let command = "";
+  #           if (comment.includes("@Dotnet-ppc64le build")) {
+  #             command = "build";
+  #           }
+  #           core.setOutput("command", command);
+
+  ppc64le-runtime-build-test:
+    needs: ppc64le-sync
+    # if: needs.ppc64le-trigger.outputs.command == 'build'
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Get PR SHA
+      #   id: get_pr
+      #   if: github.event.issue.pull_request
+      #   uses: actions/github-script@v6
+      #   with:
+      #     script: |
+      #       const prUrl = context.payload.issue.pull_request.url;
+      #       const pr = await github.request(prUrl);
+      #       const sha = pr.data.base.sha;
+      #       core.setOutput("sha", sha);
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Container
+        run: |
+          docker stop github-api && docker rm github-api
+          docker run -dit --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --network host --name github-api ubuntu:22.04
+      - name: Copy script
+        run: |
+          docker cp .github/workflows/ppc64le-runtime.sh github-api:/runtime.sh
+          docker exec github-api chmod +x /runtime.sh
+      - name: Build
+        run: |
+          docker exec github-api bash -c "/runtime.sh --build | tee /tmp/runtime-build.log; exit \${PIPESTATUS[0]}"
+      - name: Test
+        run: |
+          docker exec github-api bash -c "/runtime.sh --test | tee /tmp/runtime-test.log; exit \${PIPESTATUS[0]}"
+      - name: Copy test result summary from container
+        run: |
+          rm -rf ./Script-details
+          docker cp github-api:/Script-details ./Script-details
+      - name: Upload Script-details artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Script-details
+          path: ./Script-details
+
+  ppc64le-result-status:
+    needs: [ppc64le-sync, ppc64le-runtime-build-test]
+    # if: >
+    #   always() &&
+    #   needs.ppc64le-trigger.outputs.command == 'build'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set failure flag
+        id: check-status
+        run: echo "status=${{ needs.ppc64le-runtime-build-test.result }}" >> $GITHUB_OUTPUT
+      - name: Download Script-details artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Script-details
+          path: .
+        continue-on-error: true
+      - name: Check if Script-details file exists
+        id: script-check
+        run: |
+          if [[ -f "Script-details" ]]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+      
+      # - name: Set workflow status summary
+      #   run: |
+      #     TRIGGER_DATE=$(TZ=Asia/Kolkata date -u +"%Y-%m-%d")
+      #     START_TIME="${{ needs.ppc64le-sync.outputs.workflow_start_time }}"
+      #     END_TIME=$(TZ=Asia/Kolkata date +"%H:%M:%S")
+      #     BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+      #     TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+      #     cat <<EOF >> workflow_status
+      #     Trigger Date: ${TRIGGER_DATE}
+      #     Start Time: ${START_TIME}
+      #     End Time: ${END_TIME}
+      #     Build Status: ${BUILD_STATUS}
+      #     Test Status: ${TEST_STATUS}
+      #     EOF
+      #     cat Script-details >> workflow_status
+      #     echo "------------------------------------------------------------------" >> workflow_status
+      #     cat workflow_status
+      #     DATE=$(grep "Trigger Date" workflow_status | cut -d: -f2- | xargs)
+      #     START_TIME=$(grep "Start Time" workflow_status | cut -d: -f2- | xargs)
+      #     END_TIME=$(grep "End Time" workflow_status | cut -d: -f2- | xargs)
+      #     BUILD_STATUS=$(grep "Build Status" workflow_status | cut -d: -f2- | xargs)
+      #     TEST_STATUS=$(grep "Test Status" workflow_status | cut -d: -f2- | xargs)
+      #     if [[ "$BUILD_STATUS" == "success" && "$TEST_STATUS" == "success" ]]; then
+      #       ROW_CLASS="success"
+      #       STATUS_MSG="Runtime build is successful, test result"
+      #     else
+      #       ROW_CLASS="failure"
+      #       STATUS_MSG="Runtime build or test failed"
+      #     fi      
+      #     TOTAL=$(grep "Total Test Cases" workflow_status | awk -F: '{print $2}' | xargs)
+      #     PASSED=$(grep "Test Passed" workflow_status | awk '{print $4}')
+      #     PASS_AVG=$(grep "Test Passed" workflow_status | awk -F'[()]' '{print $2}')
+      #     FAILED=$(grep "Test Failed" workflow_status | awk '{print $4}')
+      #     FAIL_AVG=$(grep "Test Failed" workflow_status | awk -F'[()]' '{print $2}')
+      #     SKIPPED=$(grep "Test Skipped" workflow_status | awk '{print $4}')
+      #     SKIP_AVG=$(grep "Test Skipped" workflow_status | awk -F'[()]' '{print $2}')
+      #     ROW=$(cat <<EOF
+      #     <tr class="$ROW_CLASS">
+      #     <td>$DATE</td>
+      #     <td>$START_TIME</td>
+      #     <td>$END_TIME</td>
+      #     <td>
+      #     $STATUS_MSG
+      #     <hr>
+      #     <div class="status-grid">
+      #       <div class="label">Total Test Cases :</div><div>$TOTAL</div>
+      #       <div class="label">Test Passed :</div><div>$PASSED ($PASS_AVG)</div>
+      #       <div class="label">Test Failed :</div><div>$FAILED ($FAIL_AVG)</div>
+      #       <div class="label">Test Skipped :</div><div>$SKIPPED ($SKIP_AVG)</div>
+      #     </div>
+      #     </td>
+      #     </tr>
+      #     EOF
+      #     )
+      #     TMP_ROW_FILE=$(mktemp)
+      #     echo "$ROW" > "$TMP_ROW_FILE"
+      #     sed -i "/<\/tbody>/r $TMP_ROW_FILE" workflow_status
+      #     rm -f "$TMP_ROW_FILE"          
+      #     pwd
+      #     ls -la
+      #     ls -la ../
+      #     git config user.name "github-app[bot]"
+      #     git config user.email "github-app[bot]@users.noreply.github.com"
+      #     git add .
+      #     git commit -m "Add ppc64le workflow status summary" || echo "No changes to commit"
+      #     git push
+
+      - name: Create or update HTML report
+        run: |
+          REPORT=".github/ppc64le/report.html"
+      
+          mkdir -p "$(dirname "$REPORT")"
+      
+          # Create base HTML if file does not exist
+          if [[ ! -s "$REPORT" ]]; then
+            cat <<'EOF' > "$REPORT"
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <title>Build Status Report</title>
+              <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; }
+                  table { width: 100%; border-collapse: collapse; }
+                  th, td { border: 1px solid #333; padding: 10px; vertical-align: top; }
+                  th { background-color: #f2f2f2; }
+                  .success { background-color: #e6f9e6; color: #1b5e20; }
+                  .failure { background-color: #fdeaea; color: #8a1c1c; }
+                  .status hr { margin: 10px 0; }
+                  .status-grid {
+                      display: grid;
+                      grid-template-columns: auto 1fr auto 1fr;
+                      gap: 6px 20px;
+                      margin-top: 5px;
+                  }
+                  .label { font-weight: bold; }
+              </style>
+          </head>
+          <body>
+          <h2>Report</h2>
+          <table>
+          <thead>
+          <tr>
+          <th>Date</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          </tbody>
+          </table>
+          
+          </body>
+          </html>
+          EOF
+              fi
+          DATE=$(TZ=Asia/Kolkata date +"%d/%m/%Y")
+          START_TIME="${{ needs.ppc64le-sync.outputs.workflow_start_time }}"
+          END_TIME=$(TZ=Asia/Kolkata date +"%I:%M %p")
+          BUILD_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          TEST_STATUS="${{ needs.ppc64le-runtime-build-test.result }}"
+          if [[ "$BUILD_STATUS" == "success" && "$TEST_STATUS" == "success" ]]; then
+            ROW_CLASS="success"
+            STATUS_MSG="Runtime build is successful, test result"
+          else
+            ROW_CLASS="failure"
+            STATUS_MSG="Runtime build or test failed"
+          fi
+      
+          TOTAL=246
+          PASSED="243 (98.00%)"
+          FAILED="0 (0%)"
+          SKIPPED="3 (1.00%)"
+      
+          ROW=$(cat <<EOF
+      <tr class="$ROW_CLASS">
+      <td>$DATE</td>
+      <td>$START_TIME</td>
+      <td>$END_TIME</td>
+      <td class="status">
+      $STATUS_MSG
+      <hr>
+      <div class="status-grid">
+      <div class="label">Total Test Cases :</div><div>$TOTAL</div>
+      <div class="label">Test Passed :</div><div>$PASSED</div>
+      <div class="label">Test Failed :</div><div>$FAILED</div>
+      <div class="label">Test Skipped :</div><div>$SKIPPED</div>
+      </div>
+      </td>
+      </tr>
+      EOF
+          )
+      
+          TMP=$(mktemp)
+          echo "$ROW" > "$TMP"
+          sed -i "/<tbody>/r $TMP" "$REPORT"
+          rm -f "$TMP"
+      
+          echo "HTML report updated:"
+          grep -n "<tr" "$REPORT"
+
+      - name: Commit report
+        run: |
+          git config user.name "github-app[bot]"
+          git config user.email "github-app[bot]@users.noreply.github.com"
+          git add .github/ppc64le/report.html
+          git commit -m "Update ppc64le build report" || echo "No changes"
+          git push
+
+
+    
+      # - name: Comment test summary on PR
+      #   if: github.event.issue.pull_request && steps.script-check.outputs.found == 'true'
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+      #     script: |
+      #       const fs = require('fs');
+      #       const body = fs.readFileSync('Script-details', 'utf8');
+      #       const issue_number = context.issue.number;
+      #       await github.rest.issues.createComment({
+      #         issue_number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body
+      #       });
+      # - name: Comment failure message on PR
+      #   if: steps.check-status.outputs.status != 'success' || steps.script-check.outputs.found == 'false'
+      #   uses: actions/github-script@v6
+      #   with:
+      #     github-token: ${{ secrets.PPC64LE_GITHUB_TOKEN }}
+      #     script: |
+      #       const runId = process.env.GITHUB_RUN_ID;
+      #       const repo = process.env.GITHUB_REPOSITORY;
+      #       const jobUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+      #       const issue_number = context.issue.number;
+      #       const body = `The ppc64le runtime build and test job has failed. Below is the link.\n${jobUrl}`;
+      #       await github.rest.issues.createComment({
+      #         issue_number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body
+      #       });

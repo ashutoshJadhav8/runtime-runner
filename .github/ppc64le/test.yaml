@@ -1,10 +1,6 @@
 name: Trigger ppc64le build on GHA on my repo
 
 on:
-  issue_comment:
-    types: [created, edited]
-  # schedule:
-  #   - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:

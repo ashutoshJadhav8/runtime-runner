@@ -315,7 +315,7 @@ jobs:
             # Create report.html if missing or invalid
             # -----------------------------
             if [[ ! -s report.html ]] || ! grep -q "</tbody>" report.html; then
-              cat > report.html <<'HTML'
+            cat > report.html <<'HTML'
             <!DOCTYPE html>
             <html lang="en">
             <head>

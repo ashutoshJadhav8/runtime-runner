@@ -251,7 +251,7 @@ jobs:
           )
           TMP_ROW_FILE=$(mktemp)
           echo "$ROW" > "$TMP_ROW_FILE"
-          sed -i "/<\/tbody>/r $TMP_ROW_FILE" "$REPORT_FILE"
+          sed -i "/<\/tbody>/r $TMP_ROW_FILE" workflow_status
           rm -f "$TMP_ROW_FILE"          
           pwd
           ls -la

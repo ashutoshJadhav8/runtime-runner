@@ -291,8 +291,8 @@ jobs:
               <div class="status-grid">
                 <div class="label">Total Test Cases :</div><div>TOTAL_TESTS</div>
                 <div class="label">Test Passed :</div><div>PASSED_TESTS (PASS_PERCENT%)</div>
-                <div class="label">Test Failed :</div><div>FAILED_TESTS</div>
-                <div class="label">Test Skipped :</div><div>SKIPPED_TESTS</div>
+                <div class="label">Test Failed :</div><div>FAILED_TESTS (FAIL_PERCENT%)</div>
+                <div class="label">Test Skipped :</div><div>SKIPPED_TESTS (SKIPPED_PERCENT%)</div>
               </div>
             </td>
           </tr>
@@ -309,6 +309,8 @@ jobs:
             -e "s|FAILED_TESTS|$FAILED_TESTS|g" \
             -e "s|SKIPPED_TESTS|$SKIPPED_TESTS|g" \
             -e "s|PASS_PERCENT|$PASS_PERCENT|g" \
+            -e "s|FAIL_PERCENT|$FAIL_PERCENT|g" \
+            -e "s|SKIPPED_PERCENT|$SKIPPED_PERCENT|g" \
             row.html
 
           # -----------------------------

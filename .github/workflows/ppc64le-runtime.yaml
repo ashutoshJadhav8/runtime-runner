@@ -312,7 +312,7 @@ jobs:
             row.html
 
           # -----------------------------
-          # Create report.html if missing or invalid
+          # Ensure report.html exists and is valid
           # -----------------------------
           if [[ ! -s report.html ]] || ! grep -q "</tbody>" report.html; then
             printf '%s\n' \
@@ -357,9 +357,9 @@ jobs:
           '</body>' \
           '</html>' > report.html
           fi
-            
+          
           # -----------------------------
-          # Append row
+          # Append current run row
           # -----------------------------
           sed -i "/<\/tbody>/r row.html" report.html
 

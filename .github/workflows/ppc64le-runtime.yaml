@@ -240,7 +240,7 @@ jobs:
           START_TIME="${{ needs.ppc64le-sync.outputs.workflow_start_time }}"
           END_TIME=$(TZ=Asia/Kolkata date +"%I:%M %p")
           RESULT="${{ needs.ppc64le-runtime-build-test.result }}"
-
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           SCRIPT_FILE="./Script-details"
 
           # -----------------------------
@@ -279,12 +279,40 @@ jobs:
           FAIL_PERCENT="($FAIL_PERCENT%)"
           SKIPPED_PERCENT="($SKIPPED_PERCENT%)"
 
+          # ROW_CLASS="success"
+          # STATUS_TEXT="Runtime build and tests successful"
+
+          # if [[ "$RESULT" != "success" || "$FAILED_TESTS" -gt 0 ]]; then
+          #   ROW_CLASS="failure"
+          #   STATUS_TEXT="Runtime build or tests failed"
+          # fi
+
           ROW_CLASS="success"
           STATUS_TEXT="Runtime build and tests successful"
-
-          if [[ "$RESULT" != "success" || "$FAILED_TESTS" -gt 0 ]]; then
+          
+          if [[ "$RESULT" != "success" ]]; then
             ROW_CLASS="failure"
-            STATUS_TEXT="Runtime build or tests failed"
+            STATUS_TEXT="Runtime build or tests failed<br><a href=\"$RUN_URL\" target=\"_blank\">View failed workflow</a>"
+          
+            TOTAL_TESTS=""
+            PASSED_TESTS=""
+            FAILED_TESTS=""
+            SKIPPED_TESTS=""
+            PASS_PERCENT=""
+            FAIL_PERCENT=""
+            SKIPPED_PERCENT=""
+          fi
+
+          if [[ "$ROW_CLASS" == "failure" ]]; then
+            TEST_DETAILS=""
+          else
+            TEST_DETAILS='<hr>
+            <div class="status-grid">
+              <div class="label">Total Test Cases :</div><div>'"$TOTAL_TESTS"'</div>
+              <div class="label">Test Passed :</div><div>'"$PASSED_TESTS $PASS_PERCENT"'</div>
+              <div class="label">Test Failed :</div><div>'"$FAILED_TESTS $FAIL_PERCENT"'</div>
+              <div class="label">Test Skipped :</div><div>'"$SKIPPED_TESTS $SKIPPED_PERCENT"'</div>
+            </div>'
           fi
 
           # -----------------------------
@@ -294,18 +322,12 @@ jobs:
           <tr class="ROW_CLASS">
             <td>TRIGGER_DATE</td>
             <td>START_TIME</td>
-            <td>END_TIME</td>
-            <td class="status">
-              STATUS_TEXT
-              <hr>
-              <div class="status-grid">
-                <div class="label">Total Test Cases :</div><div>TOTAL_TESTS</div>
-                <div class="label">Test Passed :</div><div>PASSED_TESTS PASS_PERCENT</div>
-                <div class="label">Test Failed :</div><div>FAILED_TESTS FAIL_PERCENT</div>
-                <div class="label">Test Skipped :</div><div>SKIPPED_TESTS SKIPPED_PERCENT</div>
-              </div>
-            </td>
-          </tr>
+              <td>END_TIME</td>
+              <td class="status">
+                STATUS_TEXT
+                TEST_DETAILS
+              </td>
+            </tr>
           ROW
 
           sed -i \
@@ -321,6 +343,7 @@ jobs:
             -e "s|PASS_PERCENT|$PASS_PERCENT|g" \
             -e "s|FAIL_PERCENT|$FAIL_PERCENT|g" \
             -e "s|SKIPPED_PERCENT|$SKIPPED_PERCENT|g" \
+            -e "s|TEST_DETAILS|$TEST_DETAILS|g" \
             row.html
 
           # -----------------------------

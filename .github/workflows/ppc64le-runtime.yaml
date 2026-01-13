@@ -91,6 +91,7 @@ jobs:
 
   ppc64le-result-status:
     needs: [ppc64le-sync, ppc64le-runtime-build-test]
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

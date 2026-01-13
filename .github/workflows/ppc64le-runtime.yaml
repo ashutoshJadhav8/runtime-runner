@@ -292,7 +292,7 @@ jobs:
           
           if [[ "$RESULT" != "success" ]]; then
             ROW_CLASS="failure"
-            STATUS_TEXT="Runtime build or tests failed<br><a href=\"$RUN_URL\" target=\"_blank\">View failed workflow</a>"
+            STATUS_TEXT="Runtime build or tests failed<hr>$RUN_URL"
           
             TOTAL_TESTS=""
             PASSED_TESTS=""

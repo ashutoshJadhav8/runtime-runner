@@ -150,7 +150,7 @@ jobs:
       #     fi
 
       #     # Create row file
-      #     cat > row.html <<'ROW'
+      #     cat > row.html <<ROW
       #     <tr class="ROW_CLASS">
       #       <td>TRIGGER_DATE</td>
       #       <td>START_TIME</td>
@@ -318,33 +318,34 @@ jobs:
           # -----------------------------
           # Create row fragment
           # -----------------------------
-          cat > row.html <<'ROW'
+          cat > row.html <<ROW
           <tr class="ROW_CLASS">
-            <td>TRIGGER_DATE</td>
-            <td>START_TIME</td>
-              <td>END_TIME</td>
-              <td class="status">
-                STATUS_TEXT
-                TEST_DETAILS
-              </td>
-            </tr>
+          <tr class="$ROW_CLASS">
+            <td>$TRIGGER_DATE</td>
+            <td>$START_TIME</td>
+            <td>$END_TIME</td>
+            <td class="status">
+              $STATUS_TEXT
+              $TEST_DETAILS
+            </td>
+          </tr>
           ROW
 
-          sed -i \
-            -e "s|ROW_CLASS|$ROW_CLASS|g" \
-            -e "s|TRIGGER_DATE|$TRIGGER_DATE|g" \
-            -e "s|START_TIME|$START_TIME|g" \
-            -e "s|END_TIME|$END_TIME|g" \
-            -e "s|STATUS_TEXT|$STATUS_TEXT|g" \
-            -e "s|TOTAL_TESTS|$TOTAL_TESTS|g" \
-            -e "s|PASSED_TESTS|$PASSED_TESTS|g" \
-            -e "s|FAILED_TESTS|$FAILED_TESTS|g" \
-            -e "s|SKIPPED_TESTS|$SKIPPED_TESTS|g" \
-            -e "s|PASS_PERCENT|$PASS_PERCENT|g" \
-            -e "s|FAIL_PERCENT|$FAIL_PERCENT|g" \
-            -e "s|SKIPPED_PERCENT|$SKIPPED_PERCENT|g" \
-            -e "s|TEST_DETAILS|$TEST_DETAILS|g" \
-            row.html
+          # sed -i \
+          #   -e "s|ROW_CLASS|$ROW_CLASS|g" \
+          #   -e "s|TRIGGER_DATE|$TRIGGER_DATE|g" \
+          #   -e "s|START_TIME|$START_TIME|g" \
+          #   -e "s|END_TIME|$END_TIME|g" \
+          #   -e "s|STATUS_TEXT|$STATUS_TEXT|g" \
+          #   -e "s|TOTAL_TESTS|$TOTAL_TESTS|g" \
+          #   -e "s|PASSED_TESTS|$PASSED_TESTS|g" \
+          #   -e "s|FAILED_TESTS|$FAILED_TESTS|g" \
+          #   -e "s|SKIPPED_TESTS|$SKIPPED_TESTS|g" \
+          #   -e "s|PASS_PERCENT|$PASS_PERCENT|g" \
+          #   -e "s|FAIL_PERCENT|$FAIL_PERCENT|g" \
+          #   -e "s|SKIPPED_PERCENT|$SKIPPED_PERCENT|g" \
+          #   -e "s|TEST_DETAILS|$TEST_DETAILS|g" \
+          #   row.html
 
           # -----------------------------
           # Ensure report.html exists and is valid

@@ -221,6 +221,7 @@
     #   exit 0
     # fi
   echo "test done" >> /Script-details
+  echo 1
   }
 
 if [ "$BUILD" == "true" ]; then
